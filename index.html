@@ -632,8 +632,11 @@
           كابلز
         </button>
       </div>
-      <div class="footer-link" style="margin-top:-6px; margin-bottom:16px;">
-        <a href="#" id="nav-add-question">🔒 أسئلتي وإجاباتي الخاصة</a>
+      <div class="footer-link" style="margin-top:-6px; margin-bottom:6px;">
+        <a href="#" id="nav-add-question">➕ ضيف سؤالك الخاص</a>
+      </div>
+      <div class="footer-link" style="margin-bottom:16px;">
+        <a href="#" id="nav-my-answers">📖 إجاباتي المحفوظة</a>
       </div>
     </div>
 
@@ -660,8 +663,13 @@
         <h3>أسئلتك الخاصة</h3>
         <div class="q-list" id="my-questions-list"></div>
       </div>
+    </div>
 
-      <div class="admin-section" style="margin-top:18px; border-bottom:none; padding-bottom:0;">
+    <div id="my-answers-view" style="display:none;">
+      <div class="footer-link" style="margin-bottom:14px;">
+        <a href="#" id="my-answers-back">→ رجوع للرئيسية</a>
+      </div>
+      <div class="admin-section" style="border-bottom:none; padding-bottom:0;">
         <h3>إجاباتك المحفوظة</h3>
         <div class="q-list" id="my-answers-list"></div>
       </div>
@@ -710,22 +718,23 @@
 
       <div class="custom-q-box" id="answer-box" style="display:none;">
         <h3 style="margin:0 0 6px; font-size:14px;">📝 سجّلوا إجاباتكم</h3>
-        <p class="hint" style="margin:0 0 10px;">اضغط اسمك تحت، اكتب إجابتك، واحفظها — تقدرون الاثنين تجاوبون على نفس السؤال. إجاباتكم مشفّرة 100%، محد يشوفها غيركم.</p>
-        <p class="hint" id="answer-player-picker-hint" style="margin:0 0 6px;">مين يجاوب الحين؟</p>
-        <div class="inline-row" id="answer-player-picker">
-          <button type="button" id="answer-p1-btn">🙋 اللاعب الأول</button>
-          <button type="button" id="answer-p2-btn">🙋 اللاعب الثاني</button>
+        <p class="hint" style="margin:0 0 10px;">اكتبوا إجابة كل واحد واحفظوها مع بعض — إجاباتكم مشفّرة 100%، محد يشوفها غيركم.</p>
+
+        <div id="answer-setup-row" style="display:none;">
+          <p class="hint" style="margin:0 0 8px;">قبل لا تبدأون، اكتبوا اسم كل واحد منكم (مرة وحدة بس، لهذي الجلسة):</p>
+          <input type="text" id="answer-setup-p1-name" placeholder="اسم اللاعب الأول" style="width:100%;" />
+          <input type="text" id="answer-setup-p2-name" placeholder="اسم اللاعب الثاني" style="width:100%; margin-top:8px;" />
+          <button type="button" id="answer-setup-confirm" style="margin-top:8px;">تم</button>
         </div>
-        <div class="inline-row" id="answer-name-row" style="display:none;">
-          <input type="text" id="answer-name-input" placeholder="اسمك" />
-          <button type="button" id="answer-name-confirm">تم</button>
-        </div>
+
         <div id="answer-write-row" style="display:none;">
-          <p class="hint" id="answer-as-label" style="margin:0 0 6px; cursor:pointer; text-decoration:underline;"></p>
-          <textarea id="answer-text" placeholder="اكتب إجابتك هنا..."></textarea>
-          <button type="button" id="answer-save-btn">✔ حفظ الإجابة</button>
+          <p class="hint" id="answer-p1-label" style="margin:0 0 4px;"></p>
+          <textarea id="answer-p1-text" placeholder="اكتب إجابتك هنا..."></textarea>
+          <p class="hint" id="answer-p2-label" style="margin:10px 0 4px;"></p>
+          <textarea id="answer-p2-text" placeholder="اكتب إجابتك هنا..."></textarea>
+          <button type="button" id="answer-save-btn" style="margin-top:4px;">✔ حفظ الإجابتين</button>
         </div>
-        <p id="answer-msg" style="display:none; font-size:11px; color:var(--accent); margin:8px 0 0; text-align:center;"></p>
+        <p id="answer-msg" style="display:none; font-size:11px; margin:8px 0 0; text-align:center;"></p>
       </div>
     </div>
 
@@ -748,19 +757,26 @@
   <div id="admin-panel">
     <h1 class="logo" style="font-size:22px; margin-bottom:20px;">لوحة التحكم</h1>
 
-    <div class="admin-section">
+    <div class="navbar" style="margin-bottom:18px; flex-wrap:wrap;">
+      <span class="active" id="admin-tab-private">الأسئلة الخاصة</span>
+      <span id="admin-tab-answers">الإجابات</span>
+      <span id="admin-tab-categories">الفئات</span>
+      <span id="admin-tab-addq">إضافة أسئلة</span>
+    </div>
+
+    <div id="admin-panel-private" class="admin-section" style="border-bottom:none;">
       <h3>أسئلة اللاعبين الخاصة</h3>
       <div class="q-list" id="pending-list"></div>
       <p class="hint" id="pending-empty" style="display:none; margin:6px 0 0;">ماكو أسئلة خاصة حالياً.</p>
     </div>
 
-    <div class="admin-section">
+    <div id="admin-panel-answers" class="admin-section" style="border-bottom:none; display:none;">
       <h3>الإجابات المسجلة</h3>
       <div class="q-list" id="answers-list"></div>
       <p class="hint" id="answers-empty" style="display:none; margin:6px 0 0;">ماكو إجابات مسجلة حالياً.</p>
     </div>
 
-    <div class="admin-section">
+    <div id="admin-panel-categories" class="admin-section" style="border-bottom:none; display:none;">
       <h3>الفئات</h3>
       <div class="inline-row" style="margin-bottom:12px;">
         <button id="filter-couples-btn" style="width:auto; padding:8px 14px;">فئات كابلز</button>
@@ -778,7 +794,7 @@
       <button id="add-cat-btn" style="width:100%;">إضافة</button>
     </div>
 
-    <div class="admin-section">
+    <div id="admin-panel-addq" class="admin-section" style="border-bottom:none; display:none;">
       <h3>إضافة أسئلة</h3>
       <select id="q-cat-select"></select>
       <textarea id="new-q-bulk" placeholder="اكتب سؤال بكل سطر، تقدر تلصق أكثر من سؤال دفعة وحدة"></textarea>
@@ -1006,6 +1022,7 @@ function hideAllSections() {
   document.getElementById('card-area').style.display = 'none';
   document.getElementById('about-view').style.display = 'none';
   document.getElementById('add-question-view').style.display = 'none';
+  document.getElementById('my-answers-view').style.display = 'none';
   stopMyQuestionsListener();
   stopMyAnswersListener();
 }
@@ -1045,6 +1062,11 @@ function openAddQuestionFlow() {
   document.getElementById('add-question-view').style.display = 'block';
   renderAddQuestionCatSelect();
   openMyQuestionsPanel();
+}
+
+function openMyAnswersFlow() {
+  hideAllSections();
+  document.getElementById('my-answers-view').style.display = 'block';
   openMyAnswersPanel();
 }
 
@@ -1110,6 +1132,18 @@ document.getElementById('nav-add-question').addEventListener('click', (e) => {
 });
 
 document.getElementById('aq-back').addEventListener('click', (e) => {
+  e.preventDefault();
+  hideAllSections();
+  setActiveNav('nav-home');
+  document.getElementById('home-section').style.display = 'block';
+});
+
+document.getElementById('nav-my-answers').addEventListener('click', (e) => {
+  e.preventDefault();
+  openMyAnswersFlow();
+});
+
+document.getElementById('my-answers-back').addEventListener('click', (e) => {
   e.preventDefault();
   hideAllSections();
   setActiveNav('nav-home');
@@ -1333,100 +1367,71 @@ function renderQuestion() {
   }
 }
 
-// ---------- Answer recording (per player, admin-only) ----------
+// ---------- Answer recording (both players together, owner + admin only) ----------
 let sessionPlayerNames = { 1: null, 2: null };
-let answeringAs = null;
-let pendingNameSlot = null;
-let answeredSlotsForQuestion = new Set();
 
-function updatePlayerPickerButtons() {
-  const p1Btn = document.getElementById('answer-p1-btn');
-  const p2Btn = document.getElementById('answer-p2-btn');
-  p1Btn.textContent = answeredSlotsForQuestion.has(1) ? '✅ اللاعب الأول (جاوب)' : '🙋 اللاعب الأول';
-  p2Btn.textContent = answeredSlotsForQuestion.has(2) ? '✅ اللاعب الثاني (جاوب)' : '🙋 اللاعب الثاني';
+function answerNamesReady() {
+  return !!(sessionPlayerNames[1] && sessionPlayerNames[2]);
 }
 
-function resetAnswerBox() {
-  answeringAs = null;
-  pendingNameSlot = null;
-  answeredSlotsForQuestion = new Set();
-  updatePlayerPickerButtons();
-  document.getElementById('answer-player-picker').style.display = 'flex';
-  document.getElementById('answer-name-row').style.display = 'none';
-  document.getElementById('answer-write-row').style.display = 'none';
-  document.getElementById('answer-msg').style.display = 'none';
-  document.getElementById('answer-text').value = '';
-}
-
-function backToPicker() {
-  answeringAs = null;
-  pendingNameSlot = null;
-  updatePlayerPickerButtons();
-  document.getElementById('answer-player-picker').style.display = 'flex';
-  document.getElementById('answer-name-row').style.display = 'none';
-  document.getElementById('answer-write-row').style.display = 'none';
-  document.getElementById('answer-text').value = '';
-}
-
-function showAnswerWriteRow() {
-  document.getElementById('answer-msg').style.display = 'none';
-  document.getElementById('answer-player-picker').style.display = 'none';
-  document.getElementById('answer-name-row').style.display = 'none';
-  document.getElementById('answer-write-row').style.display = 'block';
-  document.getElementById('answer-as-label').textContent =
-    'تجاوب الحين: ' + sessionPlayerNames[answeringAs] + '  (تغيير)';
-  document.getElementById('answer-text').focus();
-}
-
-function selectAnswerPlayer(slot) {
-  if (sessionPlayerNames[slot]) {
-    answeringAs = slot;
-    showAnswerWriteRow();
+function renderAnswerBox() {
+  const setupRow = document.getElementById('answer-setup-row');
+  const writeRow = document.getElementById('answer-write-row');
+  if (!answerNamesReady()) {
+    setupRow.style.display = 'block';
+    writeRow.style.display = 'none';
   } else {
-    pendingNameSlot = slot;
-    document.getElementById('answer-msg').style.display = 'none';
-    document.getElementById('answer-player-picker').style.display = 'none';
-    document.getElementById('answer-name-row').style.display = 'flex';
-    const nameInput = document.getElementById('answer-name-input');
-    nameInput.value = '';
-    nameInput.focus();
+    setupRow.style.display = 'none';
+    writeRow.style.display = 'block';
+    document.getElementById('answer-p1-label').textContent = 'إجابة ' + sessionPlayerNames[1] + ':';
+    document.getElementById('answer-p2-label').textContent = 'إجابة ' + sessionPlayerNames[2] + ':';
   }
 }
 
-document.getElementById('answer-p1-btn').addEventListener('click', () => selectAnswerPlayer(1));
-document.getElementById('answer-p2-btn').addEventListener('click', () => selectAnswerPlayer(2));
+function resetAnswerBox() {
+  document.getElementById('answer-p1-text').value = '';
+  document.getElementById('answer-p2-text').value = '';
+  document.getElementById('answer-msg').style.display = 'none';
+  renderAnswerBox();
+}
 
-document.getElementById('answer-name-confirm').addEventListener('click', () => {
-  const name = document.getElementById('answer-name-input').value.trim();
-  if (!name || !pendingNameSlot) return;
-  sessionPlayerNames[pendingNameSlot] = name;
-  answeringAs = pendingNameSlot;
-  pendingNameSlot = null;
-  showAnswerWriteRow();
+document.getElementById('answer-setup-confirm').addEventListener('click', () => {
+  const n1 = document.getElementById('answer-setup-p1-name').value.trim();
+  const n2 = document.getElementById('answer-setup-p2-name').value.trim();
+  if (!n1 || !n2) return;
+  sessionPlayerNames[1] = n1;
+  sessionPlayerNames[2] = n2;
+  renderAnswerBox();
 });
 
-document.getElementById('answer-as-label').addEventListener('click', backToPicker);
-
 document.getElementById('answer-save-btn').addEventListener('click', async () => {
-  const textEl = document.getElementById('answer-text');
-  const text = textEl.value.trim();
+  const p1Text = document.getElementById('answer-p1-text').value.trim();
+  const p2Text = document.getElementById('answer-p2-text').value.trim();
   const btn = document.getElementById('answer-save-btn');
-  if (!text || !answeringAs || !currentQuestionText || !auth.currentUser) return;
+  const msgEl = document.getElementById('answer-msg');
+
+  if (!p1Text || !p2Text) {
+    msgEl.style.color = '#FF9E9E';
+    msgEl.textContent = 'لازم الاثنين يكتبون إجابتهم قبل الحفظ';
+    msgEl.style.display = 'block';
+    return;
+  }
+  if (!currentQuestionText || !auth.currentUser) return;
+
   btn.disabled = true;
   btn.textContent = 'جاري الحفظ...';
   try {
     const ownerUid = auth.currentUser.uid;
-    const answeredSlot = answeringAs;
-    const answeredName = sessionPlayerNames[answeringAs];
     await addDoc(answeredRef, {
       ownerUid,
       catId: currentCat,
       catName: getCatName(currentCat),
       mode: currentMode,
       questionText: currentQuestionText,
-      playerNumber: answeredSlot,
-      playerName: answeredName,
-      answerText: text,
+      player1Name: sessionPlayerNames[1],
+      player1Answer: p1Text,
+      player2Name: sessionPlayerNames[2],
+      player2Answer: p2Text,
       createdAt: serverTimestamp()
     });
     await addDoc(playedRef, {
@@ -1436,17 +1441,19 @@ document.getElementById('answer-save-btn').addEventListener('click', async () =>
       createdAt: serverTimestamp()
     });
     excludedQuestionTexts.add(currentQuestionText);
-    answeredSlotsForQuestion.add(answeredSlot);
-    backToPicker();
-    const msgEl = document.getElementById('answer-msg');
-    msgEl.textContent = 'تم حفظ إجابة ' + answeredName + '! ' +
-      (answeredSlotsForQuestion.size < 2 ? 'يقدر الطرف الثاني يجاوب على نفس السؤال لو تبون.' : 'كل الطرفين جاوبوا على هذا السؤال.');
+    document.getElementById('answer-p1-text').value = '';
+    document.getElementById('answer-p2-text').value = '';
+    msgEl.style.color = 'var(--accent)';
+    msgEl.textContent = 'تم حفظ الإجابتين! اضغط "سؤال جديد" للمتابعة.';
     msgEl.style.display = 'block';
   } catch (error) {
     console.error('Save answer error:', error);
+    msgEl.style.color = '#FF9E9E';
+    msgEl.textContent = 'صار خطأ، حاول مرة ثانية';
+    msgEl.style.display = 'block';
   } finally {
     btn.disabled = false;
-    btn.textContent = '✔ حفظ الإجابة';
+    btn.textContent = '✔ حفظ الإجابتين';
   }
 });
 
@@ -1715,15 +1722,18 @@ function renderMyAnswers(items) {
 
     const header = document.createElement('div');
     header.style.fontWeight = '700';
-    header.textContent = (item.playerName || 'مجهول') + ' — ' + (item.catName || item.catId || '');
+    header.textContent = (item.catName || item.catId || '');
 
     const qLine = document.createElement('div');
     qLine.style.fontSize = '12px';
     qLine.style.color = 'var(--ink-soft)';
     qLine.textContent = 'السؤال: ' + item.questionText;
 
-    const aLine = document.createElement('div');
-    aLine.textContent = 'الإجابة: ' + item.answerText;
+    const a1Line = document.createElement('div');
+    a1Line.textContent = (item.player1Name || 'اللاعب الأول') + ': ' + item.player1Answer;
+
+    const a2Line = document.createElement('div');
+    a2Line.textContent = (item.player2Name || 'اللاعب الثاني') + ': ' + item.player2Answer;
 
     const delBtn = document.createElement('button');
     delBtn.textContent = 'امسح';
@@ -1738,7 +1748,8 @@ function renderMyAnswers(items) {
 
     row.appendChild(header);
     row.appendChild(qLine);
-    row.appendChild(aLine);
+    row.appendChild(a1Line);
+    row.appendChild(a2Line);
     row.appendChild(delBtn);
     listEl.appendChild(row);
   });
@@ -1768,10 +1779,24 @@ document.getElementById('admin-back').addEventListener('click', (e) => {
   }
 });
 
+const ADMIN_TABS = ['private', 'answers', 'categories', 'addq'];
+
+function setAdminTab(tab) {
+  ADMIN_TABS.forEach(t => {
+    document.getElementById('admin-panel-' + t).style.display = t === tab ? 'block' : 'none';
+    document.getElementById('admin-tab-' + t).classList.toggle('active', t === tab);
+  });
+}
+
+ADMIN_TABS.forEach(t => {
+  document.getElementById('admin-tab-' + t).addEventListener('click', () => setAdminTab(t));
+});
+
 function enterAdminPanel() {
   document.getElementById('admin-gate').style.display = 'none';
   document.getElementById('admin-panel').style.display = 'block';
   adminPanelOpen = true;
+  setAdminTab('private');
   renderAdminCategories();
   renderQCatSelect();
   startPendingListener();
@@ -1877,20 +1902,18 @@ function renderAnswersList(items) {
 
     const header = document.createElement('div');
     header.style.fontWeight = '700';
-    header.textContent = (item.playerName || 'مجهول') + ' (لاعب ' + (item.playerNumber || '?') + ')';
-    const catSpan = document.createElement('span');
-    catSpan.style.color = 'var(--ink-muted)';
-    catSpan.style.fontWeight = '400';
-    catSpan.textContent = ' — ' + (item.catName || item.catId || '');
-    header.appendChild(catSpan);
+    header.textContent = (item.catName || item.catId || '');
 
     const qLine = document.createElement('div');
     qLine.style.fontSize = '12px';
     qLine.style.color = 'var(--ink-soft)';
     qLine.textContent = 'السؤال: ' + item.questionText;
 
-    const aLine = document.createElement('div');
-    aLine.textContent = 'الإجابة: ' + item.answerText;
+    const a1Line = document.createElement('div');
+    a1Line.textContent = (item.player1Name || 'اللاعب الأول') + ': ' + item.player1Answer;
+
+    const a2Line = document.createElement('div');
+    a2Line.textContent = (item.player2Name || 'اللاعب الثاني') + ': ' + item.player2Answer;
 
     const delBtn = document.createElement('button');
     delBtn.textContent = 'حذف';
@@ -1905,7 +1928,8 @@ function renderAnswersList(items) {
 
     row.appendChild(header);
     row.appendChild(qLine);
-    row.appendChild(aLine);
+    row.appendChild(a1Line);
+    row.appendChild(a2Line);
     row.appendChild(delBtn);
     listEl.appendChild(row);
   });

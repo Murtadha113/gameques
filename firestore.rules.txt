@@ -35,14 +35,15 @@ service cloud.firestore {
       allow delete: if request.auth != null && request.auth.uid == 'WyzmPfdR9mNd6XKyc1jQzpMCb2x2';
     }
 
-    // الإجابات الفعلية على الأسئلة - خاصة بين صاحب الحساب (اللي سجلها) والأدمن بس، محد ثاني يشوفها
+    // الإجابات الفعلية على الأسئلة (إجابة الطرفين مع بعض بنفس المستند) - خاصة بين صاحب الحساب والأدمن بس
     match /answeredQuestions/{docId} {
       allow create: if request.auth != null
                     && request.resource.data.ownerUid == request.auth.uid
-                    && request.resource.data.keys().hasAll(['ownerUid', 'catId', 'mode', 'questionText', 'playerNumber', 'playerName', 'answerText', 'createdAt'])
-                    && request.resource.data.answerText is string && request.resource.data.answerText.size() > 0 && request.resource.data.answerText.size() < 2000
-                    && request.resource.data.playerName is string && request.resource.data.playerName.size() > 0 && request.resource.data.playerName.size() < 60
-                    && (request.resource.data.playerNumber == 1 || request.resource.data.playerNumber == 2);
+                    && request.resource.data.keys().hasAll(['ownerUid', 'catId', 'mode', 'questionText', 'player1Name', 'player1Answer', 'player2Name', 'player2Answer', 'createdAt'])
+                    && request.resource.data.player1Name is string && request.resource.data.player1Name.size() > 0 && request.resource.data.player1Name.size() < 60
+                    && request.resource.data.player2Name is string && request.resource.data.player2Name.size() > 0 && request.resource.data.player2Name.size() < 60
+                    && request.resource.data.player1Answer is string && request.resource.data.player1Answer.size() > 0 && request.resource.data.player1Answer.size() < 2000
+                    && request.resource.data.player2Answer is string && request.resource.data.player2Answer.size() > 0 && request.resource.data.player2Answer.size() < 2000;
       allow update: if false;
       allow read, delete: if request.auth != null
                            && (request.auth.uid == 'WyzmPfdR9mNd6XKyc1jQzpMCb2x2' || request.auth.uid == resource.data.ownerUid);
