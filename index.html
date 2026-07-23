@@ -1778,16 +1778,30 @@ document.querySelectorAll('.admin-tab').forEach(btn => {
 
 function startAdminListeners() {
   if (!unsubPending) {
-    unsubPending = onSnapshot(query(pendingRef, orderBy('createdAt','desc')), (snap) => {
-      renderPendingList(snap.docs.map(d => ({ id: d.id, ...d.data() })));
+    unsubPending = onSnapshot(query(pendingRef), (snap) => {
+      const items = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+      // Sort manually
+      items.sort((a, b) => {
+        const aTime = a.createdAt ? (a.createdAt.toMillis ? a.createdAt.toMillis() : a.createdAt) : 0;
+        const bTime = b.createdAt ? (b.createdAt.toMillis ? b.createdAt.toMillis() : b.createdAt) : 0;
+        return bTime - aTime;
+      });
+      renderPendingList(items);
     }, (err) => {
       console.error('Pending listener error:', err);
     });
   }
 
   if (!unsubAnswers) {
-    unsubAnswers = onSnapshot(query(answeredRef, orderBy('createdAt','desc')), (snap) => {
-      renderAdminAnswers(snap.docs.map(d => ({ id: d.id, ...d.data() })));
+    unsubAnswers = onSnapshot(query(answeredRef), (snap) => {
+      const items = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+      // Sort manually
+      items.sort((a, b) => {
+        const aTime = a.createdAt ? (a.createdAt.toMillis ? a.createdAt.toMillis() : a.createdAt) : 0;
+        const bTime = b.createdAt ? (b.createdAt.toMillis ? b.createdAt.toMillis() : b.createdAt) : 0;
+        return bTime - aTime;
+      });
+      renderAdminAnswers(items);
     }, (err) => {
       console.error('Answers listener error:', err);
     });
