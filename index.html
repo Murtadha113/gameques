@@ -531,11 +531,15 @@
     </div>
     <h1 class="logo">كابلز</h1>
     <p class="tagline">سجل دخول عشان تبدأ اللعب.</p>
-    <div class="custom-q-box" style="margin-top:16px;">
-      <p class="hint" style="margin:0 0 8px;">اسم مستخدم وكلمة سر تختارها (٦ أحرف أو أكثر). أول مرة يسوي لك حساب تلقائي، والمرات الجاية ترجعك لنفس حسابك وأسئلتك الخاصة من أي جهاز.</p>
+    <div class="navbar" style="margin-top:16px;">
+      <span class="active" id="auth-mode-register">حساب جديد</span>
+      <span id="auth-mode-login">عندي حساب</span>
+    </div>
+    <div class="custom-q-box" style="margin-top:0;">
+      <p class="hint" id="player-login-hint" style="margin:0 0 8px;">اختر اسم مستخدم وكلمة سر (٦ أحرف أو أكثر) — احفظهم عشان ترجع لنفس حسابك وأسئلتك الخاصة من أي جهاز.</p>
       <input type="text" id="player-username" placeholder="اسم المستخدم" />
       <input type="password" id="player-password" placeholder="كلمة السر (٦ أحرف أو أكثر)" />
-      <button id="player-login-submit">دخول / تسجيل</button>
+      <button id="player-login-submit">إنشاء حساب</button>
       <p id="player-login-error" style="display:none; font-size:11px; color:#FF9E9E; margin:8px 0 0; text-align:center;"></p>
     </div>
   </div>
@@ -728,7 +732,7 @@ function toPlayerEmail(username) {
   return 'player_' + encoded + '@players.gameques.local';
 }
 
-async function ensurePlayerAuth(username, password) {
+async function registerPlayer(username, password) {
   const email = toPlayerEmail(username);
   try {
     const cred = await createUserWithEmailAndPassword(auth, email, password);
@@ -736,14 +740,19 @@ async function ensurePlayerAuth(username, password) {
     return cred.user.uid;
   } catch (err) {
     if (err.code === 'auth/email-already-in-use') {
-      try {
-        const cred2 = await signInWithEmailAndPassword(auth, email, password);
-        return cred2.user.uid;
-      } catch (err2) {
-        throw new Error('BAD_LOGIN');
-      }
+      throw new Error('USERNAME_TAKEN');
     }
     throw err;
+  }
+}
+
+async function loginPlayer(username, password) {
+  const email = toPlayerEmail(username);
+  try {
+    const cred = await signInWithEmailAndPassword(auth, email, password);
+    return cred.user.uid;
+  } catch (err) {
+    throw new Error('LOGIN_FAILED');
   }
 }
 
@@ -1010,6 +1019,22 @@ document.getElementById('aq-back').addEventListener('click', (e) => {
   document.getElementById('home-section').style.display = 'block';
 });
 
+let authMode = 'register';
+
+function setAuthMode(mode) {
+  authMode = mode;
+  document.getElementById('auth-mode-register').classList.toggle('active', mode === 'register');
+  document.getElementById('auth-mode-login').classList.toggle('active', mode === 'login');
+  document.getElementById('player-login-submit').textContent = mode === 'register' ? 'إنشاء حساب' : 'دخول';
+  document.getElementById('player-login-hint').textContent = mode === 'register'
+    ? 'اختر اسم مستخدم وكلمة سر (٦ أحرف أو أكثر) — احفظهم عشان ترجع لنفس حسابك وأسئلتك الخاصة من أي جهاز.'
+    : 'اكتب نفس اسم المستخدم وكلمة السر اللي سجلت فيها قبل.';
+  document.getElementById('player-login-error').style.display = 'none';
+}
+
+document.getElementById('auth-mode-register').addEventListener('click', () => setAuthMode('register'));
+document.getElementById('auth-mode-login').addEventListener('click', () => setAuthMode('login'));
+
 document.getElementById('player-login-submit').addEventListener('click', async () => {
   const username = document.getElementById('player-username').value.trim();
   const password = document.getElementById('player-password').value;
@@ -1022,23 +1047,29 @@ document.getElementById('player-login-submit').addEventListener('click', async (
     return;
   }
   submitBtn.disabled = true;
-  submitBtn.textContent = 'جاري الدخول...';
+  submitBtn.textContent = authMode === 'register' ? 'جاري الإنشاء...' : 'جاري الدخول...';
   try {
-    await ensurePlayerAuth(username, password);
+    if (authMode === 'register') {
+      await registerPlayer(username, password);
+    } else {
+      await loginPlayer(username, password);
+    }
     document.getElementById('player-username').value = '';
     document.getElementById('player-password').value = '';
     renderTopPlayerBadge();
   } catch (error) {
     console.error('Player login error:', error);
-    if (error.message === 'BAD_LOGIN') {
-      errorEl.textContent = 'اسم المستخدم موجود بكلمة سر مختلفة، جرب كلمة سر ثانية أو اسم مستخدم غير';
+    if (error.message === 'USERNAME_TAKEN') {
+      errorEl.textContent = 'هذا الاسم مستخدم من قبل، اختر اسم ثاني أو اضغط "عندي حساب" لتسجل دخول';
+    } else if (error.message === 'LOGIN_FAILED') {
+      errorEl.textContent = 'اسم المستخدم أو كلمة السر غلط';
     } else {
       errorEl.textContent = 'صار خطأ، حاول مرة ثانية';
     }
     errorEl.style.display = 'block';
   } finally {
     submitBtn.disabled = false;
-    submitBtn.textContent = 'دخول / تسجيل';
+    submitBtn.textContent = authMode === 'register' ? 'إنشاء حساب' : 'دخول';
   }
 });
 
