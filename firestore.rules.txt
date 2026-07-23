@@ -8,11 +8,13 @@ service cloud.firestore {
       allow write: if request.auth != null && request.auth.uid == 'WyzmPfdR9mNd6XKyc1jQzpMCb2x2';
     }
 
-    // الأسئلة المقترحة من اللاعبين - أي حد يقدر يرسل، بس محد يقدر يقرأها أو يحذفها غير الأدمن
+    // الأسئلة المقترحة من اللاعبين (والصورة المرفقة كنص base64) - أي حد يقدر يرسل، بس محد يقدر يقرأها أو يحذفها غير الأدمن
     match /pendingQuestions/{docId} {
       allow create: if request.resource.data.keys().hasAll(['name', 'text', 'catId', 'mode', 'createdAt'])
                     && request.resource.data.name is string && request.resource.data.name.size() > 0 && request.resource.data.name.size() < 60
-                    && request.resource.data.text is string && request.resource.data.text.size() > 0 && request.resource.data.text.size() < 500;
+                    && request.resource.data.text is string && request.resource.data.text.size() > 0 && request.resource.data.text.size() < 500
+                    && (!('photoBase64' in request.resource.data) || request.resource.data.photoBase64 == null
+                        || (request.resource.data.photoBase64 is string && request.resource.data.photoBase64.size() < 950000));
       allow update: if false;
       allow read, delete: if request.auth != null && request.auth.uid == 'WyzmPfdR9mNd6XKyc1jQzpMCb2x2';
     }
