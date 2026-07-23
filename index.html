@@ -525,12 +525,29 @@
 
 <div class="stage">
 
-  <div id="main-view">
+  <div id="player-login-gate">
+    <div class="logo-row">
+      <span class="arrow">↗</span>
+    </div>
+    <h1 class="logo">كابلز</h1>
+    <p class="tagline">سجل دخول عشان تبدأ اللعب.</p>
+    <div class="custom-q-box" style="margin-top:16px;">
+      <p class="hint" style="margin:0 0 8px;">اسم مستخدم وكلمة سر تختارها (٦ أحرف أو أكثر). أول مرة يسوي لك حساب تلقائي، والمرات الجاية ترجعك لنفس حسابك وأسئلتك الخاصة من أي جهاز.</p>
+      <input type="text" id="player-username" placeholder="اسم المستخدم" />
+      <input type="password" id="player-password" placeholder="كلمة السر (٦ أحرف أو أكثر)" />
+      <button id="player-login-submit">دخول / تسجيل</button>
+      <p id="player-login-error" style="display:none; font-size:11px; color:#FF9E9E; margin:8px 0 0; text-align:center;"></p>
+    </div>
+  </div>
+
+  <div id="main-view" style="display:none;">
     <div class="navbar">
       <span class="active" id="nav-home">الرئيسية</span>
       <span id="nav-about">عن اللعبة</span>
       <span id="nav-categories">الفئات</span>
     </div>
+
+    <div class="footer-link" id="top-player-badge" style="margin-bottom:6px;"></div>
 
     <div class="logo-row">
       <span class="arrow">↗</span>
@@ -555,24 +572,10 @@
       </div>
     </div>
 
-    <div id="player-login-gate" style="display:none;">
-      <div class="footer-link" style="margin-bottom:14px;">
-        <a href="#" id="player-login-back">→ رجوع للرئيسية</a>
-      </div>
-      <div class="custom-q-box" style="margin-top:0;">
-        <p class="hint" style="margin:0 0 8px;">سجل باسم مستخدم وكلمة سر تختارها (٦ أحرف أو أكثر) — عشان أسئلتك الخاصة تضل مربوطة فيك حتى لو غيرت الجهاز أو المتصفح.</p>
-        <input type="text" id="player-username" placeholder="اسم المستخدم" />
-        <input type="password" id="player-password" placeholder="كلمة السر (٦ أحرف أو أكثر)" />
-        <button id="player-login-submit">دخول / تسجيل</button>
-        <p id="player-login-error" style="display:none; font-size:11px; color:#FF9E9E; margin:8px 0 0; text-align:center;"></p>
-      </div>
-    </div>
-
     <div id="add-question-view" style="display:none;">
       <div class="footer-link" style="margin-bottom:14px;">
         <a href="#" id="aq-back">→ رجوع للرئيسية</a>
       </div>
-      <div class="footer-link" id="aq-player-badge" style="margin-bottom:12px; font-size:12px; color:var(--ink-soft);"></div>
       <div class="custom-q-box" style="margin-top:0;">
         <p class="hint" style="margin:0 0 8px;">الأسئلة والصور مشفّرة، ولا يمكن لأي أحد رؤيتها سوى اللي أضافها 100%.</p>
         <input type="text" id="aq-name" placeholder="اسمك" />
@@ -903,7 +906,6 @@ function hideAllSections() {
   document.getElementById('card-area').style.display = 'none';
   document.getElementById('about-view').style.display = 'none';
   document.getElementById('add-question-view').style.display = 'none';
-  document.getElementById('player-login-gate').style.display = 'none';
   stopMyQuestionsListener();
 }
 
@@ -937,28 +939,15 @@ document.getElementById('nav-home').addEventListener('click', () => {
   document.getElementById('home-section').style.display = 'block';
 });
 
-let pendingAfterLogin = null;
-
-function requirePlayerLogin(next) {
-  if (isPlayerLoggedIn()) {
-    next();
-  } else {
-    pendingAfterLogin = next;
-    hideAllSections();
-    document.getElementById('player-login-gate').style.display = 'block';
-  }
-}
-
 function openAddQuestionFlow() {
   hideAllSections();
   document.getElementById('add-question-view').style.display = 'block';
   renderAddQuestionCatSelect();
-  renderPlayerBadge();
   openMyQuestionsPanel();
 }
 
-function renderPlayerBadge() {
-  const el = document.getElementById('aq-player-badge');
+function renderTopPlayerBadge() {
+  const el = document.getElementById('top-player-badge');
   if (!el) return;
   el.innerHTML = '';
   const name = (auth.currentUser && auth.currentUser.displayName) || 'مستخدم';
@@ -966,33 +955,56 @@ function renderPlayerBadge() {
   span.textContent = 'مسجل كـ ' + name + '  ·  ';
   const logoutLink = document.createElement('a');
   logoutLink.href = '#';
-  logoutLink.textContent = 'تبديل المستخدم';
+  logoutLink.textContent = 'تسجيل خروج';
   logoutLink.addEventListener('click', async (e) => {
     e.preventDefault();
     try { await signOut(auth); } catch (err) { console.error('Player sign out error:', err); }
-    hideAllSections();
-    setActiveNav('nav-home');
-    document.getElementById('home-section').style.display = 'block';
   });
   el.appendChild(span);
   el.appendChild(logoutLink);
 }
 
+function showLoginGate() {
+  document.getElementById('main-view').style.display = 'none';
+  document.getElementById('player-login-gate').style.display = 'block';
+}
+
+let lastAuthUid = null;
+
+function showMainApp() {
+  document.getElementById('player-login-gate').style.display = 'none';
+  document.getElementById('main-view').style.display = 'block';
+  renderTopPlayerBadge();
+  currentMode = null;
+  document.querySelectorAll('.mode-btn').forEach(b => b.classList.remove('active'));
+  setModeTheme(null);
+  hideAllSections();
+  setActiveNav('nav-home');
+  document.getElementById('home-section').style.display = 'block';
+}
+
+onAuthStateChanged(auth, (user) => {
+  const isRealUser = user && !user.isAnonymous;
+  if (isRealUser) {
+    if (lastAuthUid !== user.uid) {
+      lastAuthUid = user.uid;
+      showMainApp();
+    } else {
+      renderTopPlayerBadge();
+    }
+  } else {
+    lastAuthUid = null;
+    showLoginGate();
+  }
+});
+
 document.getElementById('nav-add-question').addEventListener('click', (e) => {
   e.preventDefault();
-  requirePlayerLogin(openAddQuestionFlow);
+  openAddQuestionFlow();
 });
 
 document.getElementById('aq-back').addEventListener('click', (e) => {
   e.preventDefault();
-  hideAllSections();
-  setActiveNav('nav-home');
-  document.getElementById('home-section').style.display = 'block';
-});
-
-document.getElementById('player-login-back').addEventListener('click', (e) => {
-  e.preventDefault();
-  pendingAfterLogin = null;
   hideAllSections();
   setActiveNav('nav-home');
   document.getElementById('home-section').style.display = 'block';
@@ -1015,9 +1027,6 @@ document.getElementById('player-login-submit').addEventListener('click', async (
     await ensurePlayerAuth(username, password);
     document.getElementById('player-username').value = '';
     document.getElementById('player-password').value = '';
-    const next = pendingAfterLogin;
-    pendingAfterLogin = null;
-    if (next) next();
   } catch (error) {
     console.error('Player login error:', error);
     if (error.message === 'BAD_LOGIN') {
@@ -1114,7 +1123,7 @@ function showCard(catId) {
 }
 
 function showPrivateCategory() {
-  requirePlayerLogin(openPrivateCategoryFlow);
+  openPrivateCategoryFlow();
 }
 
 async function openPrivateCategoryFlow() {
