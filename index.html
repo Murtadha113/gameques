@@ -480,21 +480,41 @@
     padding: 14px 16px;
     border-radius: var(--radius-xs);
     border: 1px solid var(--border-glass);
-    background: rgba(255,255,255,0.05);
+    background: rgba(20, 15, 35, 0.6);
     color: var(--ink);
     font-size: 14px;
     font-family: inherit;
     transition: all 0.2s ease;
+    -webkit-appearance: none;
+    -moz-appearance: none;
+    appearance: none;
   }
   .form-input:focus, .form-textarea:focus, .form-select:focus {
     outline: none;
     border-color: var(--accent);
-    background: rgba(255,255,255,0.08);
+    background: rgba(20, 15, 35, 0.8);
     box-shadow: 0 0 0 3px rgba(255,107,157,0.1);
   }
-  .form-textarea { resize: vertical; min-height: 100px; line-height: 1.7; }
-  .form-select { cursor: pointer; }
+  .form-textarea { 
+    resize: vertical; 
+    min-height: 100px; 
+    line-height: 1.7; 
+    background: rgba(20, 15, 35, 0.6);
+  }
+  .form-select { 
+    cursor: pointer; 
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%23ffffff' d='M6 8L1 3h10z'/%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: left 16px center;
+    padding-left: 40px;
+  }
+  .form-select option {
+    background: #1a1425;
+    color: #fff;
+  }
   ::placeholder { color: var(--ink-muted); }
+  ::-webkit-input-placeholder { color: var(--ink-muted); }
+  :-ms-input-placeholder { color: var(--ink-muted); }
 
   .answer-section {
     margin-top: 20px;
@@ -1046,7 +1066,7 @@
         </div>
         <div class="form-group">
           <label class="form-label">الأسئلة (سؤال بكل سطر)</label>
-          <textarea id="admin-q-bulk" class="form-textarea" placeholder="اكتب سؤال بكل سطر..." style="min-height:140px;"></textarea>
+          <textarea id="admin-q-bulk" class="form-textarea" placeholder="اكتب سؤال بكل سطر...&#10;مثال:&#10;شنو أكثر شي تحبه فيني؟&#10;متى حسيت بأمان معاي؟" style="min-height:140px; background:rgba(20,15,35,0.6);"></textarea>
         </div>
         <button class="btn-primary" id="btn-admin-add-q" style="margin-top:4px;">إضافة الأسئلة</button>
       </div>
@@ -1791,6 +1811,14 @@ function setAdminTab(tab) {
       btn.classList.toggle('active', btn.dataset.adminTab === tab);
     });
   });
+  // Refresh categories when opening addq tab
+  if (tab === 'addq') {
+    renderAdminQCat();
+  }
+  // Refresh categories when opening categories tab
+  if (tab === 'categories') {
+    renderAdminCats();
+  }
 }
 
 document.querySelectorAll('.admin-tab').forEach(btn => {
@@ -1939,14 +1967,28 @@ $('btn-add-cat').addEventListener('click', async () => {
 // Admin Add Questions
 function renderAdminQCat() {
   const sel = $('admin-q-cat');
-  if (!sel || !state) return;
+  if (!sel) return;
+
+  // Clear current options
   sel.innerHTML = '';
+
+  // If state not loaded yet, show loading option
+  if (!state || !state.categories || !state.categories.length) {
+    const opt = document.createElement('option');
+    opt.value = '';
+    opt.textContent = 'جاري تحميل الفئات...';
+    sel.appendChild(opt);
+    return;
+  }
+
+  // Add categories
   state.categories.forEach(cat => {
     const opt = document.createElement('option');
     opt.value = cat.id;
-    opt.textContent = cat.name + ' — ' + (cat.mode === 'friends' ? 'أصدقاء' : 'كابلز');
+    opt.textContent = (cat.icon || '💬') + ' ' + cat.name + ' — ' + (cat.mode === 'friends' ? 'أصدقاء' : 'كابلز');
     sel.appendChild(opt);
   });
+
   renderAdminQList();
 }
 
@@ -1956,16 +1998,27 @@ function renderAdminQList() {
   const catId = $('admin-q-cat').value;
   const listEl = $('admin-q-list');
   listEl.innerHTML = '';
-  if (!state || !catId) return;
-  const list = (state.questions && state.questions[catId]) || [];
+
+  if (!catId) {
+    listEl.innerHTML = '<div class="empty-state"><div class="empty-text">اختر فئة أولاً</div></div>';
+    return;
+  }
+
+  if (!state || !state.questions || !state.questions[catId]) {
+    listEl.innerHTML = '<div class="empty-state"><div class="empty-text">ما فيه أسئلة بهذي الفئة</div></div>';
+    return;
+  }
+
+  const list = state.questions[catId] || [];
   if (!list.length) {
     listEl.innerHTML = '<div class="empty-state"><div class="empty-text">ما فيه أسئلة بهذي الفئة</div></div>';
     return;
   }
+
   list.forEach((q, i) => {
     const row = document.createElement('div');
     row.className = 'list-item';
-    row.innerHTML = '<span class="item-text">' + q + '</span>';
+    row.innerHTML = '<span class="item-text">' + (i+1) + '. ' + q + '</span>';
     const delBtn = document.createElement('button');
     delBtn.className = 'btn-danger';
     delBtn.textContent = 'حذف';
