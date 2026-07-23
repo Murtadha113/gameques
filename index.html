@@ -1263,6 +1263,13 @@ document.querySelectorAll('#main-nav .nav-pill').forEach(pill => {
   pill.addEventListener('click', () => {
     const nav = pill.dataset.nav;
     setNavActive(nav);
+
+    // Clean up listeners when leaving answers page
+    if (nav !== 'answers' && unsubMyAnswers) {
+      unsubMyAnswers(); 
+      unsubMyAnswers = null;
+    }
+
     if (nav === 'home') { currentMode = null; showPage('page-home'); }
     else if (nav === 'add') { showPage('page-add'); loadMyQuestions(); }
     else if (nav === 'answers') { showPage('page-answers'); loadMyAnswers(); }
@@ -1293,6 +1300,8 @@ function renderCats() {
   if (!currentMode || !state) return;
   const grid = $('cat-grid');
   grid.innerHTML = '';
+
+  // Regular categories
   state.categories.filter(c => !c.hidden && c.mode === currentMode).forEach(cat => {
     const btn = document.createElement('button');
     btn.className = 'cat-card';
@@ -1300,6 +1309,14 @@ function renderCats() {
     btn.addEventListener('click', () => openQuestion(cat.id));
     grid.appendChild(btn);
   });
+
+  // Private questions category
+  const privateBtn = document.createElement('button');
+  privateBtn.className = 'cat-card';
+  privateBtn.style.border = '2px dashed var(--accent)';
+  privateBtn.innerHTML = '<span class="cat-emoji">🔒</span><span class="cat-name">أسئلتي الخاصة</span>';
+  privateBtn.addEventListener('click', () => openPrivateCategory());
+  grid.appendChild(privateBtn);
 }
 
 // ===== QUESTIONS =====
@@ -1335,16 +1352,26 @@ async function openQuestion(catId) {
   showPage('page-question');
   $('q-cat-label').textContent = getCatName(catId);
   await loadExcluded(catId);
+  renderQuestion();
+}
 
-  if (catId === '__private__') {
-    myPrivateQs = [];
+async function openPrivateCategory() {
+  currentCat = '__private__';
+  qCounter = 0;
+  showPage('page-question');
+  $('q-cat-label').textContent = '🔒 أسئلتي الخاصة';
+
+  // Load user's private questions for this mode
+  myPrivateQs = [];
+  if (auth.currentUser) {
     try {
       const uid = auth.currentUser.uid;
       const snap = await getDocs(query(pendingRef, where('ownerUid','==',uid), where('mode','==',currentMode)));
       myPrivateQs = snap.docs.map(d => ({ text: d.data().text, photoBase64: d.data().photoBase64 || null })).filter(q => q.text);
-    } catch(e) {}
+    } catch(e) { console.error('Load private questions error:', e); }
   }
 
+  await loadExcluded('__private__');
   renderQuestion();
 }
 
@@ -1537,10 +1564,14 @@ $('aq-submit').addEventListener('click', async () => {
       }
     }
 
+    // Get mode from selected category
+    const selectedCat = state.categories.find(c => c.id === catId);
+    const questionMode = selectedCat ? selectedCat.mode : 'couples';
+
     await addDoc(pendingRef, {
       name, text, catId,
       catName: getCatName(catId),
-      mode: currentMode || 'couples',
+      mode: questionMode,
       photoBase64,
       ownerUid: auth.currentUser.uid,
       createdAt: serverTimestamp()
@@ -1604,26 +1635,38 @@ function renderMyQuestions(items) {
 }
 
 // ===== MY ANSWERS =====
-async function loadMyAnswers() {
+let unsubMyAnswers = null;
+
+function loadMyAnswers() {
   const listEl = $('my-answers-list');
   if (!auth.currentUser) {
     listEl.innerHTML = '<div class="empty-state"><div class="empty-text">سجل دخول أولاً</div></div>';
     return;
   }
+
+  // Stop previous listener
+  if (unsubMyAnswers) { unsubMyAnswers(); unsubMyAnswers = null; }
+
   listEl.innerHTML = '<div class="loading-dots"><span></span><span></span><span></span></div>';
-  try {
-    const snap = await getDocs(query(answeredRef, where('ownerUid','==',auth.currentUser.uid), orderBy('createdAt','desc')));
-    const items = snap.docs.map(d => ({ id: d.id, ...d.data() }));
-    renderMyAnswers(items);
-  } catch(e) {
-    listEl.innerHTML = '<div class="empty-state"><div class="empty-text">تعذر التحميل</div></div>';
-  }
+
+  // Use onSnapshot for real-time updates
+  unsubMyAnswers = onSnapshot(
+    query(answeredRef, where('ownerUid','==',auth.currentUser.uid), orderBy('createdAt','desc')),
+    (snap) => {
+      const items = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+      renderMyAnswers(items);
+    },
+    (err) => {
+      console.error('My answers error:', err);
+      listEl.innerHTML = '<div class="empty-state"><div class="empty-text">تعذر التحميل: ' + (err.message || 'خطأ غير معروف') + '</div></div>';
+    }
+  );
 }
 
 function renderMyAnswers(items) {
   const listEl = $('my-answers-list');
   listEl.innerHTML = '';
-  if (!items.length) {
+  if (!items || !items.length) {
     listEl.innerHTML = '<div class="empty-state"><div class="empty-emoji">📖</div><div class="empty-text">ما فيه إجابات محفوظة لين الحين</div></div>';
     return;
   }
@@ -1632,17 +1675,30 @@ function renderMyAnswers(items) {
     card.className = 'glass-card';
     card.style.marginBottom = '12px';
     card.style.padding = '16px';
+
+    // Safely get values with fallbacks
+    const catName = item.catName || item.catId || 'فئة غير معروفة';
+    const questionText = item.questionText || 'سؤال غير متوفر';
+    const p1Name = item.player1Name || 'اللاعب الأول';
+    const p1Answer = item.player1Answer || '';
+    const p2Name = item.player2Name || 'اللاعب الثاني';
+    const p2Answer = item.player2Answer || '';
+
     card.innerHTML = 
-      '<div style="font-weight:700; font-size:14px; margin-bottom:6px;">' + (item.catName || item.catId) + '</div>' +
-      '<div style="font-size:12px; color:var(--ink-muted); margin-bottom:10px;">السؤال: ' + item.questionText + '</div>' +
-      '<div style="font-size:13px; margin-bottom:6px;"><strong>' + (item.player1Name || 'اللاعب الأول') + ':</strong> ' + item.player1Answer + '</div>' +
-      '<div style="font-size:13px; margin-bottom:10px;"><strong>' + (item.player2Name || 'اللاعب الثاني') + ':</strong> ' + item.player2Answer + '</div>';
+      '<div style="font-weight:700; font-size:14px; margin-bottom:6px;">' + catName + '</div>' +
+      '<div style="font-size:12px; color:var(--ink-muted); margin-bottom:10px;">السؤال: ' + questionText + '</div>' +
+      '<div style="font-size:13px; margin-bottom:6px; line-height:1.6;"><strong style="color:var(--accent);">' + p1Name + ':</strong> ' + p1Answer + '</div>' +
+      '<div style="font-size:13px; margin-bottom:12px; line-height:1.6;"><strong style="color:var(--accent-2);">' + p2Name + ':</strong> ' + p2Answer + '</div>';
+
     const delBtn = document.createElement('button');
     delBtn.className = 'btn-danger';
     delBtn.textContent = 'حذف';
     delBtn.addEventListener('click', async () => {
-      try { await deleteDoc(doc(db, 'answeredQuestions', item.id)); loadMyAnswers(); }
-      catch(e) {}
+      try { 
+        await deleteDoc(doc(db, 'answeredQuestions', item.id)); 
+        // No need to call loadMyAnswers - onSnapshot will auto-update
+      }
+      catch(e) { console.error('Delete answer error:', e); }
     });
     card.appendChild(delBtn);
     listEl.appendChild(card);
@@ -1721,15 +1777,21 @@ document.querySelectorAll('.admin-tab').forEach(btn => {
 });
 
 function startAdminListeners() {
-  if (unsubPending) return;
-  unsubPending = onSnapshot(query(pendingRef, orderBy('createdAt','desc')), (snap) => {
-    renderPendingList(snap.docs.map(d => ({ id: d.id, ...d.data() })));
-  });
+  if (!unsubPending) {
+    unsubPending = onSnapshot(query(pendingRef, orderBy('createdAt','desc')), (snap) => {
+      renderPendingList(snap.docs.map(d => ({ id: d.id, ...d.data() })));
+    }, (err) => {
+      console.error('Pending listener error:', err);
+    });
+  }
 
-  if (unsubAnswers) return;
-  unsubAnswers = onSnapshot(query(answeredRef, orderBy('createdAt','desc')), (snap) => {
-    renderAdminAnswers(snap.docs.map(d => ({ id: d.id, ...d.data() })));
-  });
+  if (!unsubAnswers) {
+    unsubAnswers = onSnapshot(query(answeredRef, orderBy('createdAt','desc')), (snap) => {
+      renderAdminAnswers(snap.docs.map(d => ({ id: d.id, ...d.data() })));
+    }, (err) => {
+      console.error('Answers listener error:', err);
+    });
+  }
 }
 
 function stopAdminListeners() {
