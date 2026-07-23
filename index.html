@@ -1027,6 +1027,7 @@ document.getElementById('player-login-submit').addEventListener('click', async (
     await ensurePlayerAuth(username, password);
     document.getElementById('player-username').value = '';
     document.getElementById('player-password').value = '';
+    renderTopPlayerBadge();
   } catch (error) {
     console.error('Player login error:', error);
     if (error.message === 'BAD_LOGIN') {
