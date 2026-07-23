@@ -556,7 +556,7 @@
         <input type="file" id="aq-photo" accept="image/*" style="display:none;" />
         <span id="aq-photo-name" class="hint" style="display:none; margin-right:8px;"></span>
         <p id="aq-error" style="display:none; font-size:11px; color:#FF9E9E; margin:8px 0 0; text-align:center;"></p>
-        <p id="aq-msg" style="display:none; font-size:11px; color:var(--accent); margin:8px 0 0; text-align:center;">تم الحفظ! بيصير جزء من أسئلتك الخاصة أول ما تلعب هذي الفئة</p>
+        <p id="aq-msg" style="display:none; font-size:11px; color:var(--accent); margin:8px 0 0; text-align:center;">تم الحفظ! بتلقاه بفئة "🔒 أسئلتي الخاصة" داخل نفس الوضع</p>
       </div>
 
       <div class="admin-section" style="margin-top:18px; border-bottom:none; padding-bottom:0;">
@@ -572,7 +572,8 @@
           كابلز لعبة أسئلة تفاعلية تساعدكم تتقربون أكثر، سواء كنتم كابل أو أصدقاء.
           اختر الوضع، اختر الفئة، واسحب سؤال بعد سؤال. كل الأسئلة مولّدة ومنتقاة
           بواسطة الذكاء الاصطناعي، وتقدر تضيف أسئلتك الخاصة من صفحة "ضيف سؤالك
-          الخاص" بالرئيسية — تنحفظ وتصير جزء من أسئلتك بس، ما تشوفها لأي لاعب ثاني.
+          الخاص" بالرئيسية — تنحفظ فورًا وتلقاها بفئة مخصصة اسمها "🔒 أسئلتي
+          الخاصة" داخل نفس الوضع، ما تشوفها لأي لاعب ثاني.
         </p>
       </div>
     </div>
@@ -927,6 +928,11 @@ function renderCategories() {
     btn.addEventListener('click', () => showCard(cat.id));
     grid.appendChild(btn);
   });
+  const privateBtn = document.createElement('button');
+  privateBtn.className = 'cat-btn';
+  privateBtn.innerHTML = `<span class="icon">🔒</span>أسئلتي الخاصة`;
+  privateBtn.addEventListener('click', showPrivateCategory);
+  grid.appendChild(privateBtn);
 }
 
 document.getElementById('back-to-modes').addEventListener('click', (e) => {
@@ -939,24 +945,17 @@ document.getElementById('back-to-modes').addEventListener('click', (e) => {
   document.getElementById('home-section').style.display = 'block';
 });
 
+const PRIVATE_CAT_ID = '__private__';
 let myPrivateQuestions = [];
 
-async function loadMyPrivateQuestions(catId) {
-  myPrivateQuestions = [];
-  try {
-    const uid = await ensureAnonAuth();
-    const snap = await getDocs(query(pendingRef, where('ownerUid', '==', uid), where('catId', '==', catId)));
-    myPrivateQuestions = snap.docs.map(d => d.data().text).filter(Boolean);
-  } catch (error) {
-    console.error('Load my private questions error:', error);
-  }
-}
-
 function pickQuestion(catId) {
+  if (catId === PRIVATE_CAT_ID) {
+    if (!myPrivateQuestions.length) return null;
+    return myPrivateQuestions[Math.floor(Math.random() * myPrivateQuestions.length)];
+  }
   const shared = (state.questions && state.questions[catId]) || [];
-  const list = shared.concat(myPrivateQuestions);
-  if (!list.length) return null;
-  return list[Math.floor(Math.random() * list.length)];
+  if (!shared.length) return null;
+  return shared[Math.floor(Math.random() * shared.length)];
 }
 
 function getCatName(catId) {
@@ -969,13 +968,29 @@ function getCatMode(catId) {
   return c ? c.mode : null;
 }
 
-async function showCard(catId) {
+function showCard(catId) {
   currentCat = catId;
   document.getElementById('cat-select-wrap').style.display = 'none';
   document.getElementById('card-area').style.display = 'block';
   document.getElementById('cat-label').textContent = getCatName(catId);
-  await loadMyPrivateQuestions(catId);
   renderQuestion();
+}
+
+async function showPrivateCategory() {
+  currentCat = PRIVATE_CAT_ID;
+  myPrivateQuestions = [];
+  document.getElementById('cat-select-wrap').style.display = 'none';
+  document.getElementById('card-area').style.display = 'block';
+  document.getElementById('cat-label').textContent = '🔒 أسئلتي الخاصة';
+  renderQuestion();
+  try {
+    const uid = await ensureAnonAuth();
+    const snap = await getDocs(query(pendingRef, where('ownerUid', '==', uid), where('mode', '==', currentMode)));
+    myPrivateQuestions = snap.docs.map(d => d.data().text).filter(Boolean);
+  } catch (error) {
+    console.error('Load my private questions error:', error);
+  }
+  if (currentCat === PRIVATE_CAT_ID) renderQuestion();
 }
 
 function renderQuestion() {
