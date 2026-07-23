@@ -745,7 +745,7 @@ async function ensurePlayerAuth(username, password) {
 }
 
 function isPlayerLoggedIn() {
-  return !!auth.currentUser;
+  return !!(auth.currentUser && !auth.currentUser.isAnonymous);
 }
 
 const ADMIN_UID = "WyzmPfdR9mNd6XKyc1jQzpMCb2x2";
@@ -1241,7 +1241,7 @@ document.getElementById('aq-submit').addEventListener('click', async () => {
   const catId = catSelect.value;
   errorEl.style.display = 'none';
   if (!name || !text || !catId) return;
-  if (!auth.currentUser) {
+  if (!isPlayerLoggedIn()) {
     errorEl.textContent = 'خلصت جلستك، سجل دخول من جديد';
     errorEl.style.display = 'block';
     return;
@@ -1317,7 +1317,7 @@ let unsubscribeMyQuestions = null;
 
 function openMyQuestionsPanel() {
   const listEl = document.getElementById('my-questions-list');
-  if (!auth.currentUser) {
+  if (!isPlayerLoggedIn()) {
     listEl.innerHTML = '<p class="hint" style="margin:0;">تعذر الاتصال، حاول مرة ثانية</p>';
     return;
   }
