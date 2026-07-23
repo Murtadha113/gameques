@@ -660,6 +660,11 @@
         <h3>أسئلتك الخاصة</h3>
         <div class="q-list" id="my-questions-list"></div>
       </div>
+
+      <div class="admin-section" style="margin-top:18px; border-bottom:none; padding-bottom:0;">
+        <h3>إجاباتك المحفوظة</h3>
+        <div class="q-list" id="my-answers-list"></div>
+      </div>
     </div>
 
     <div id="about-view" style="display:none;">
@@ -1000,6 +1005,7 @@ function hideAllSections() {
   document.getElementById('about-view').style.display = 'none';
   document.getElementById('add-question-view').style.display = 'none';
   stopMyQuestionsListener();
+  stopMyAnswersListener();
 }
 
 function setActiveNav(id) {
@@ -1037,6 +1043,7 @@ function openAddQuestionFlow() {
   document.getElementById('add-question-view').style.display = 'block';
   renderAddQuestionCatSelect();
   openMyQuestionsPanel();
+  openMyAnswersPanel();
 }
 
 function renderTopPlayerBadge() {
@@ -1615,6 +1622,92 @@ function renderMyQuestions(items) {
       }
     });
     row.appendChild(span);
+    row.appendChild(delBtn);
+    listEl.appendChild(row);
+  });
+}
+
+// ---------- My saved answers (question + answer together, owner + admin only) ----------
+let unsubscribeMyAnswers = null;
+
+function openMyAnswersPanel() {
+  const listEl = document.getElementById('my-answers-list');
+  if (!isPlayerLoggedIn()) {
+    listEl.innerHTML = '<p class="hint" style="margin:0;">تعذر الاتصال، حاول مرة ثانية</p>';
+    return;
+  }
+  listEl.innerHTML = '<p class="hint" style="margin:0;">جاري التحميل...</p>';
+  startMyAnswersListener(auth.currentUser.uid);
+}
+
+function startMyAnswersListener(uid) {
+  stopMyAnswersListener();
+  unsubscribeMyAnswers = onSnapshot(
+    query(answeredRef, where('ownerUid', '==', uid)),
+    (snap) => {
+      const items = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+      items.sort((a, b) => (b.createdAt ? b.createdAt.toMillis() : 0) - (a.createdAt ? a.createdAt.toMillis() : 0));
+      renderMyAnswers(items);
+    },
+    (error) => {
+      console.error('My answers error:', error);
+      document.getElementById('my-answers-list').innerHTML =
+        '<p class="hint" style="margin:0;">تعذر تحميل الإجابات، حاول مرة ثانية</p>';
+    }
+  );
+}
+
+function stopMyAnswersListener() {
+  if (unsubscribeMyAnswers) {
+    unsubscribeMyAnswers();
+    unsubscribeMyAnswers = null;
+  }
+}
+
+function renderMyAnswers(items) {
+  const listEl = document.getElementById('my-answers-list');
+  listEl.innerHTML = '';
+  if (!items.length) {
+    const empty = document.createElement('p');
+    empty.className = 'hint';
+    empty.style.margin = '0';
+    empty.textContent = 'ما فيه إجابات محفوظة لين الحين.';
+    listEl.appendChild(empty);
+    return;
+  }
+  items.forEach(item => {
+    const row = document.createElement('div');
+    row.className = 'q-row';
+    row.style.flexDirection = 'column';
+    row.style.alignItems = 'stretch';
+    row.style.gap = '4px';
+
+    const header = document.createElement('div');
+    header.style.fontWeight = '700';
+    header.textContent = (item.playerName || 'مجهول') + ' — ' + (item.catName || item.catId || '');
+
+    const qLine = document.createElement('div');
+    qLine.style.fontSize = '12px';
+    qLine.style.color = 'var(--ink-soft)';
+    qLine.textContent = 'السؤال: ' + item.questionText;
+
+    const aLine = document.createElement('div');
+    aLine.textContent = 'الإجابة: ' + item.answerText;
+
+    const delBtn = document.createElement('button');
+    delBtn.textContent = 'امسح';
+    delBtn.style.alignSelf = 'flex-start';
+    delBtn.addEventListener('click', async () => {
+      try {
+        await deleteDoc(doc(db, 'answeredQuestions', item.id));
+      } catch (error) {
+        console.error('Delete my answer error:', error);
+      }
+    });
+
+    row.appendChild(header);
+    row.appendChild(qLine);
+    row.appendChild(aLine);
     row.appendChild(delBtn);
     listEl.appendChild(row);
   });

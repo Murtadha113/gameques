@@ -35,7 +35,7 @@ service cloud.firestore {
       allow delete: if request.auth != null && request.auth.uid == 'WyzmPfdR9mNd6XKyc1jQzpMCb2x2';
     }
 
-    // الإجابات الفعلية على الأسئلة - خاصة تمامًا، الأدمن بس يقدر يشوفها ويحذفها (حتى صاحبها ما يقدر يرجع يقرأها)
+    // الإجابات الفعلية على الأسئلة - خاصة بين صاحب الحساب (اللي سجلها) والأدمن بس، محد ثاني يشوفها
     match /answeredQuestions/{docId} {
       allow create: if request.auth != null
                     && request.resource.data.ownerUid == request.auth.uid
@@ -44,7 +44,8 @@ service cloud.firestore {
                     && request.resource.data.playerName is string && request.resource.data.playerName.size() > 0 && request.resource.data.playerName.size() < 60
                     && (request.resource.data.playerNumber == 1 || request.resource.data.playerNumber == 2);
       allow update: if false;
-      allow read, delete: if request.auth != null && request.auth.uid == 'WyzmPfdR9mNd6XKyc1jQzpMCb2x2';
+      allow read, delete: if request.auth != null
+                           && (request.auth.uid == 'WyzmPfdR9mNd6XKyc1jQzpMCb2x2' || request.auth.uid == resource.data.ownerUid);
     }
   }
 }
