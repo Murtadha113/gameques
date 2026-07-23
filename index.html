@@ -1251,7 +1251,9 @@ $('auth-submit').addEventListener('click', async () => {
     if (err.code === 'auth/email-already-in-use') msg = 'هذا الإيميل مسجل من قبل، اضغط "تسجيل دخول"';
     else if (err.code === 'auth/invalid-email') msg = 'اكتب إيميل صحيح';
     else if (err.code === 'auth/wrong-password' || err.code === 'auth/user-not-found') msg = 'الإيميل أو كلمة السر غلط';
+    else if (err.code === 'permission-denied') msg = 'خطأ في الصلاحيات، تواصل مع الأدمن';
     showMsg('auth-error', msg, true);
+    console.error('Auth error:', err);
   } finally {
     btn.disabled = false;
     btn.textContent = isReg ? 'إنشاء حساب' : 'تسجيل دخول';
