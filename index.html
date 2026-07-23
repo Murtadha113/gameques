@@ -136,6 +136,10 @@
     margin-bottom: 4px;
     display: inline-block;
     animation: gentle-bob 3s ease-in-out infinite;
+    transition: transform 0.1s ease;
+    cursor: pointer;
+    user-select: none;
+    -webkit-tap-highlight-color: transparent;
   }
   @keyframes gentle-bob {
     0%, 100% { transform: translateY(0); }
@@ -1706,23 +1710,38 @@ function renderMyAnswers(items) {
 }
 
 // ===== ADMIN =====
-// Secret admin entry: double-click the logo 5 times within 3 seconds
+// Secret admin entry: click the logo 7 times within 4 seconds
 (function setupSecretAdmin() {
   let clickCount = 0;
   let lastClickTime = 0;
   const trigger = document.getElementById('secret-admin-trigger');
   if (!trigger) return;
 
-  trigger.addEventListener('dblclick', () => {
+  // Use 'click' instead of 'dblclick' for better cross-device support
+  trigger.addEventListener('click', (e) => {
+    // Prevent default to avoid any unwanted behavior
+    e.preventDefault();
+
     const now = Date.now();
-    if (now - lastClickTime > 3000) clickCount = 0;
+    // Reset if more than 4 seconds passed since last click
+    if (now - lastClickTime > 4000) clickCount = 0;
     lastClickTime = now;
     clickCount++;
 
-    if (clickCount >= 5) {
+    // Visual feedback (subtle scale effect)
+    trigger.style.transform = 'scale(0.9)';
+    setTimeout(() => { trigger.style.transform = ''; }, 100);
+
+    if (clickCount >= 7) {
       showView('view-admin-login');
       clickCount = 0;
     }
+  });
+
+  // Also support touch for mobile
+  trigger.addEventListener('touchend', (e) => {
+    e.preventDefault();
+    trigger.click();
   });
 })();
 
