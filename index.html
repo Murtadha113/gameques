@@ -633,7 +633,7 @@
         </button>
       </div>
       <div class="footer-link" style="margin-top:-6px; margin-bottom:16px;">
-        <a href="#" id="nav-add-question">➕ ضيف سؤالك الخاص</a>
+        <a href="#" id="nav-add-question">🔒 أسئلتي وإجاباتي الخاصة</a>
       </div>
     </div>
 
@@ -709,7 +709,9 @@
       <div class="ai-note-mini" id="ai-note-mini"><span class="dot"></span> سؤال مولّد بواسطة الذكاء الاصطناعي</div>
 
       <div class="custom-q-box" id="answer-box" style="display:none;">
-        <p class="hint" style="margin:0 0 8px;">اكتب إجابتك واحفظها عشان تتذكرونها لاحقًا — إجاباتك مشفّرة 100%، محد يشوفها غيرك.</p>
+        <h3 style="margin:0 0 6px; font-size:14px;">📝 سجّلوا إجاباتكم</h3>
+        <p class="hint" style="margin:0 0 10px;">اضغط اسمك تحت، اكتب إجابتك، واحفظها — تقدرون الاثنين تجاوبون على نفس السؤال. إجاباتكم مشفّرة 100%، محد يشوفها غيركم.</p>
+        <p class="hint" id="answer-player-picker-hint" style="margin:0 0 6px;">مين يجاوب الحين؟</p>
         <div class="inline-row" id="answer-player-picker">
           <button type="button" id="answer-p1-btn">🙋 اللاعب الأول</button>
           <button type="button" id="answer-p2-btn">🙋 اللاعب الثاني</button>
@@ -719,11 +721,11 @@
           <button type="button" id="answer-name-confirm">تم</button>
         </div>
         <div id="answer-write-row" style="display:none;">
-          <p class="hint" id="answer-as-label" style="margin:0 0 6px; cursor:pointer;"></p>
+          <p class="hint" id="answer-as-label" style="margin:0 0 6px; cursor:pointer; text-decoration:underline;"></p>
           <textarea id="answer-text" placeholder="اكتب إجابتك هنا..."></textarea>
-          <button type="button" id="answer-save-btn">حفظ الإجابة</button>
+          <button type="button" id="answer-save-btn">✔ حفظ الإجابة</button>
         </div>
-        <p id="answer-msg" style="display:none; font-size:11px; color:var(--accent); margin:8px 0 0; text-align:center;">تم الحفظ! إجابتك محفوظة وما يشوفها غيرك.</p>
+        <p id="answer-msg" style="display:none; font-size:11px; color:var(--accent); margin:8px 0 0; text-align:center;"></p>
       </div>
     </div>
 
@@ -1335,10 +1337,20 @@ function renderQuestion() {
 let sessionPlayerNames = { 1: null, 2: null };
 let answeringAs = null;
 let pendingNameSlot = null;
+let answeredSlotsForQuestion = new Set();
+
+function updatePlayerPickerButtons() {
+  const p1Btn = document.getElementById('answer-p1-btn');
+  const p2Btn = document.getElementById('answer-p2-btn');
+  p1Btn.textContent = answeredSlotsForQuestion.has(1) ? '✅ اللاعب الأول (جاوب)' : '🙋 اللاعب الأول';
+  p2Btn.textContent = answeredSlotsForQuestion.has(2) ? '✅ اللاعب الثاني (جاوب)' : '🙋 اللاعب الثاني';
+}
 
 function resetAnswerBox() {
   answeringAs = null;
   pendingNameSlot = null;
+  answeredSlotsForQuestion = new Set();
+  updatePlayerPickerButtons();
   document.getElementById('answer-player-picker').style.display = 'flex';
   document.getElementById('answer-name-row').style.display = 'none';
   document.getElementById('answer-write-row').style.display = 'none';
@@ -1346,12 +1358,24 @@ function resetAnswerBox() {
   document.getElementById('answer-text').value = '';
 }
 
+function backToPicker() {
+  answeringAs = null;
+  pendingNameSlot = null;
+  updatePlayerPickerButtons();
+  document.getElementById('answer-player-picker').style.display = 'flex';
+  document.getElementById('answer-name-row').style.display = 'none';
+  document.getElementById('answer-write-row').style.display = 'none';
+  document.getElementById('answer-text').value = '';
+}
+
 function showAnswerWriteRow() {
+  document.getElementById('answer-msg').style.display = 'none';
   document.getElementById('answer-player-picker').style.display = 'none';
   document.getElementById('answer-name-row').style.display = 'none';
   document.getElementById('answer-write-row').style.display = 'block';
   document.getElementById('answer-as-label').textContent =
-    'تجاوب: ' + sessionPlayerNames[answeringAs] + '  (تغيير)';
+    'تجاوب الحين: ' + sessionPlayerNames[answeringAs] + '  (تغيير)';
+  document.getElementById('answer-text').focus();
 }
 
 function selectAnswerPlayer(slot) {
@@ -1360,6 +1384,7 @@ function selectAnswerPlayer(slot) {
     showAnswerWriteRow();
   } else {
     pendingNameSlot = slot;
+    document.getElementById('answer-msg').style.display = 'none';
     document.getElementById('answer-player-picker').style.display = 'none';
     document.getElementById('answer-name-row').style.display = 'flex';
     const nameInput = document.getElementById('answer-name-input');
@@ -1380,7 +1405,7 @@ document.getElementById('answer-name-confirm').addEventListener('click', () => {
   showAnswerWriteRow();
 });
 
-document.getElementById('answer-as-label').addEventListener('click', resetAnswerBox);
+document.getElementById('answer-as-label').addEventListener('click', backToPicker);
 
 document.getElementById('answer-save-btn').addEventListener('click', async () => {
   const textEl = document.getElementById('answer-text');
@@ -1391,14 +1416,16 @@ document.getElementById('answer-save-btn').addEventListener('click', async () =>
   btn.textContent = 'جاري الحفظ...';
   try {
     const ownerUid = auth.currentUser.uid;
+    const answeredSlot = answeringAs;
+    const answeredName = sessionPlayerNames[answeringAs];
     await addDoc(answeredRef, {
       ownerUid,
       catId: currentCat,
       catName: getCatName(currentCat),
       mode: currentMode,
       questionText: currentQuestionText,
-      playerNumber: answeringAs,
-      playerName: sessionPlayerNames[answeringAs],
+      playerNumber: answeredSlot,
+      playerName: answeredName,
       answerText: text,
       createdAt: serverTimestamp()
     });
@@ -1409,13 +1436,17 @@ document.getElementById('answer-save-btn').addEventListener('click', async () =>
       createdAt: serverTimestamp()
     });
     excludedQuestionTexts.add(currentQuestionText);
-    document.getElementById('answer-write-row').style.display = 'none';
-    document.getElementById('answer-msg').style.display = 'block';
+    answeredSlotsForQuestion.add(answeredSlot);
+    backToPicker();
+    const msgEl = document.getElementById('answer-msg');
+    msgEl.textContent = 'تم حفظ إجابة ' + answeredName + '! ' +
+      (answeredSlotsForQuestion.size < 2 ? 'يقدر الطرف الثاني يجاوب على نفس السؤال لو تبون.' : 'كل الطرفين جاوبوا على هذا السؤال.');
+    msgEl.style.display = 'block';
   } catch (error) {
     console.error('Save answer error:', error);
   } finally {
     btn.disabled = false;
-    btn.textContent = 'حفظ الإجابة';
+    btn.textContent = '✔ حفظ الإجابة';
   }
 });
 
