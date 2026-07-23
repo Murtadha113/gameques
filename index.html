@@ -89,6 +89,13 @@
     backdrop-filter: blur(18px);
     box-shadow: 0 30px 70px rgba(20,10,50,0.4), 0 0 0 1px rgba(255,255,255,0.03) inset;
     animation: stageIn .5s ease;
+    transition: max-width .2s ease;
+  }
+  @media (min-width: 900px) {
+    .stage { max-width: 720px; padding: 28px 32px 34px; }
+  }
+  @media (min-width: 1300px) {
+    .stage { max-width: 880px; }
   }
   @keyframes stageIn {
     from { opacity: 0; transform: translateY(14px) scale(.98); }
@@ -461,7 +468,7 @@
     border: 1px solid var(--border-glass);
     border-radius: 8px;
   }
-  .q-list { max-height: 220px; overflow-y: auto; margin-top: 10px; }
+  .q-list { max-height: 320px; overflow-y: auto; margin-top: 10px; }
   .inline-row { display: flex; gap: 8px; }
   .inline-row input { flex: 1; margin-bottom: 0; }
   .inline-row button { width: auto; padding: 0 16px; }
@@ -496,9 +503,12 @@
   .photo-upload-label:hover { background: var(--glass-strong); }
   .pending-photo {
     max-width: 100%;
+    max-height: 160px;
+    width: auto;
     border-radius: 10px;
     margin-top: 4px;
     display: block;
+    object-fit: cover;
   }
   .custom-q-box button {
     background: var(--accent);
@@ -1702,6 +1712,16 @@ function stopMyAnswersListener() {
   }
 }
 
+function buildAnswerLine(name, answer, fallbackName) {
+  const line = document.createElement('div');
+  const nameSpan = document.createElement('span');
+  nameSpan.style.fontWeight = '700';
+  nameSpan.textContent = (name || fallbackName) + ': ';
+  line.appendChild(nameSpan);
+  line.appendChild(document.createTextNode(answer || ''));
+  return line;
+}
+
 function renderMyAnswers(items) {
   const listEl = document.getElementById('my-answers-list');
   listEl.innerHTML = '';
@@ -1729,11 +1749,8 @@ function renderMyAnswers(items) {
     qLine.style.color = 'var(--ink-soft)';
     qLine.textContent = 'السؤال: ' + item.questionText;
 
-    const a1Line = document.createElement('div');
-    a1Line.textContent = (item.player1Name || 'اللاعب الأول') + ': ' + item.player1Answer;
-
-    const a2Line = document.createElement('div');
-    a2Line.textContent = (item.player2Name || 'اللاعب الثاني') + ': ' + item.player2Answer;
+    const a1Line = buildAnswerLine(item.player1Name, item.player1Answer, 'اللاعب الأول');
+    const a2Line = buildAnswerLine(item.player2Name, item.player2Answer, 'اللاعب الثاني');
 
     const delBtn = document.createElement('button');
     delBtn.textContent = 'امسح';
@@ -1909,11 +1926,8 @@ function renderAnswersList(items) {
     qLine.style.color = 'var(--ink-soft)';
     qLine.textContent = 'السؤال: ' + item.questionText;
 
-    const a1Line = document.createElement('div');
-    a1Line.textContent = (item.player1Name || 'اللاعب الأول') + ': ' + item.player1Answer;
-
-    const a2Line = document.createElement('div');
-    a2Line.textContent = (item.player2Name || 'اللاعب الثاني') + ': ' + item.player2Answer;
+    const a1Line = buildAnswerLine(item.player1Name, item.player1Answer, 'اللاعب الأول');
+    const a2Line = buildAnswerLine(item.player2Name, item.player2Answer, 'اللاعب الثاني');
 
     const delBtn = document.createElement('button');
     delBtn.textContent = 'حذف';
