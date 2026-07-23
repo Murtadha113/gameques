@@ -555,10 +555,24 @@
       </div>
     </div>
 
+    <div id="player-login-gate" style="display:none;">
+      <div class="footer-link" style="margin-bottom:14px;">
+        <a href="#" id="player-login-back">→ رجوع للرئيسية</a>
+      </div>
+      <div class="custom-q-box" style="margin-top:0;">
+        <p class="hint" style="margin:0 0 8px;">سجل باسم مستخدم وكلمة سر تختارها (٦ أحرف أو أكثر) — عشان أسئلتك الخاصة تضل مربوطة فيك حتى لو غيرت الجهاز أو المتصفح.</p>
+        <input type="text" id="player-username" placeholder="اسم المستخدم" />
+        <input type="password" id="player-password" placeholder="كلمة السر (٦ أحرف أو أكثر)" />
+        <button id="player-login-submit">دخول / تسجيل</button>
+        <p id="player-login-error" style="display:none; font-size:11px; color:#FF9E9E; margin:8px 0 0; text-align:center;"></p>
+      </div>
+    </div>
+
     <div id="add-question-view" style="display:none;">
       <div class="footer-link" style="margin-bottom:14px;">
         <a href="#" id="aq-back">→ رجوع للرئيسية</a>
       </div>
+      <div class="footer-link" id="aq-player-badge" style="margin-bottom:12px; font-size:12px; color:var(--ink-soft);"></div>
       <div class="custom-q-box" style="margin-top:0;">
         <p class="hint" style="margin:0 0 8px;">الأسئلة والصور مشفّرة، ولا يمكن لأي أحد رؤيتها سوى اللي أضافها 100%.</p>
         <input type="text" id="aq-name" placeholder="اسمك" />
@@ -686,7 +700,7 @@ import {
   collection, addDoc, deleteDoc, query, orderBy, where, serverTimestamp
 } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 import {
-  getAuth, signInWithEmailAndPassword, signInAnonymously, signOut, onAuthStateChanged
+  getAuth, signInWithEmailAndPassword, createUserWithEmailAndPassword, updateProfile, signOut, onAuthStateChanged
 } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
 
 const firebaseConfig = {
@@ -704,10 +718,34 @@ const auth = getAuth(app);
 const dataRef = doc(db, "couplesGame", "data");
 const pendingRef = collection(db, "pendingQuestions");
 
-async function ensureAnonAuth() {
-  if (auth.currentUser) return auth.currentUser.uid;
-  const cred = await signInAnonymously(auth);
-  return cred.user.uid;
+function toPlayerEmail(username) {
+  const normalized = username.trim().toLowerCase();
+  const encoded = btoa(unescape(encodeURIComponent(normalized)))
+    .replace(/\+/g, '-').replace(/\//g, '_').replace(/=/g, '');
+  return 'player_' + encoded + '@players.gameques.local';
+}
+
+async function ensurePlayerAuth(username, password) {
+  const email = toPlayerEmail(username);
+  try {
+    const cred = await createUserWithEmailAndPassword(auth, email, password);
+    await updateProfile(cred.user, { displayName: username.trim() });
+    return cred.user.uid;
+  } catch (err) {
+    if (err.code === 'auth/email-already-in-use') {
+      try {
+        const cred2 = await signInWithEmailAndPassword(auth, email, password);
+        return cred2.user.uid;
+      } catch (err2) {
+        throw new Error('BAD_LOGIN');
+      }
+    }
+    throw err;
+  }
+}
+
+function isPlayerLoggedIn() {
+  return !!auth.currentUser;
 }
 
 const ADMIN_UID = "WyzmPfdR9mNd6XKyc1jQzpMCb2x2";
@@ -865,6 +903,7 @@ function hideAllSections() {
   document.getElementById('card-area').style.display = 'none';
   document.getElementById('about-view').style.display = 'none';
   document.getElementById('add-question-view').style.display = 'none';
+  document.getElementById('player-login-gate').style.display = 'none';
   stopMyQuestionsListener();
 }
 
@@ -898,12 +937,50 @@ document.getElementById('nav-home').addEventListener('click', () => {
   document.getElementById('home-section').style.display = 'block';
 });
 
-document.getElementById('nav-add-question').addEventListener('click', (e) => {
-  e.preventDefault();
+let pendingAfterLogin = null;
+
+function requirePlayerLogin(next) {
+  if (isPlayerLoggedIn()) {
+    next();
+  } else {
+    pendingAfterLogin = next;
+    hideAllSections();
+    document.getElementById('player-login-gate').style.display = 'block';
+  }
+}
+
+function openAddQuestionFlow() {
   hideAllSections();
   document.getElementById('add-question-view').style.display = 'block';
   renderAddQuestionCatSelect();
+  renderPlayerBadge();
   openMyQuestionsPanel();
+}
+
+function renderPlayerBadge() {
+  const el = document.getElementById('aq-player-badge');
+  if (!el) return;
+  el.innerHTML = '';
+  const name = (auth.currentUser && auth.currentUser.displayName) || 'مستخدم';
+  const span = document.createElement('span');
+  span.textContent = 'مسجل كـ ' + name + '  ·  ';
+  const logoutLink = document.createElement('a');
+  logoutLink.href = '#';
+  logoutLink.textContent = 'تبديل المستخدم';
+  logoutLink.addEventListener('click', async (e) => {
+    e.preventDefault();
+    try { await signOut(auth); } catch (err) { console.error('Player sign out error:', err); }
+    hideAllSections();
+    setActiveNav('nav-home');
+    document.getElementById('home-section').style.display = 'block';
+  });
+  el.appendChild(span);
+  el.appendChild(logoutLink);
+}
+
+document.getElementById('nav-add-question').addEventListener('click', (e) => {
+  e.preventDefault();
+  requirePlayerLogin(openAddQuestionFlow);
 });
 
 document.getElementById('aq-back').addEventListener('click', (e) => {
@@ -911,6 +988,48 @@ document.getElementById('aq-back').addEventListener('click', (e) => {
   hideAllSections();
   setActiveNav('nav-home');
   document.getElementById('home-section').style.display = 'block';
+});
+
+document.getElementById('player-login-back').addEventListener('click', (e) => {
+  e.preventDefault();
+  pendingAfterLogin = null;
+  hideAllSections();
+  setActiveNav('nav-home');
+  document.getElementById('home-section').style.display = 'block';
+});
+
+document.getElementById('player-login-submit').addEventListener('click', async () => {
+  const username = document.getElementById('player-username').value.trim();
+  const password = document.getElementById('player-password').value;
+  const submitBtn = document.getElementById('player-login-submit');
+  const errorEl = document.getElementById('player-login-error');
+  errorEl.style.display = 'none';
+  if (!username || password.length < 6) {
+    errorEl.textContent = 'اكتب اسم مستخدم وكلمة سر ٦ أحرف أو أكثر';
+    errorEl.style.display = 'block';
+    return;
+  }
+  submitBtn.disabled = true;
+  submitBtn.textContent = 'جاري الدخول...';
+  try {
+    await ensurePlayerAuth(username, password);
+    document.getElementById('player-username').value = '';
+    document.getElementById('player-password').value = '';
+    const next = pendingAfterLogin;
+    pendingAfterLogin = null;
+    if (next) next();
+  } catch (error) {
+    console.error('Player login error:', error);
+    if (error.message === 'BAD_LOGIN') {
+      errorEl.textContent = 'اسم المستخدم موجود بكلمة سر مختلفة، جرب كلمة سر ثانية أو اسم مستخدم غير';
+    } else {
+      errorEl.textContent = 'صار خطأ، حاول مرة ثانية';
+    }
+    errorEl.style.display = 'block';
+  } finally {
+    submitBtn.disabled = false;
+    submitBtn.textContent = 'دخول / تسجيل';
+  }
 });
 
 document.getElementById('nav-about').addEventListener('click', () => {
@@ -994,7 +1113,11 @@ function showCard(catId) {
   renderQuestion();
 }
 
-async function showPrivateCategory() {
+function showPrivateCategory() {
+  requirePlayerLogin(openPrivateCategoryFlow);
+}
+
+async function openPrivateCategoryFlow() {
   currentCat = PRIVATE_CAT_ID;
   myPrivateQuestions = [];
   document.getElementById('cat-select-wrap').style.display = 'none';
@@ -1002,7 +1125,7 @@ async function showPrivateCategory() {
   document.getElementById('cat-label').textContent = '🔒 أسئلتي الخاصة';
   renderQuestion();
   try {
-    const uid = await ensureAnonAuth();
+    const uid = auth.currentUser.uid;
     const snap = await getDocs(query(pendingRef, where('ownerUid', '==', uid), where('mode', '==', currentMode)));
     myPrivateQuestions = snap.docs
       .map(d => ({ text: d.data().text, photoBase64: d.data().photoBase64 || null }))
@@ -1118,6 +1241,11 @@ document.getElementById('aq-submit').addEventListener('click', async () => {
   const catId = catSelect.value;
   errorEl.style.display = 'none';
   if (!name || !text || !catId) return;
+  if (!auth.currentUser) {
+    errorEl.textContent = 'خلصت جلستك، سجل دخول من جديد';
+    errorEl.style.display = 'block';
+    return;
+  }
 
   const file = photoInput.files[0];
   if (file && file.size > 15 * 1024 * 1024) {
@@ -1129,7 +1257,7 @@ document.getElementById('aq-submit').addEventListener('click', async () => {
   submitBtn.disabled = true;
   submitBtn.textContent = 'جاري الإرسال...';
   try {
-    const ownerUid = await ensureAnonAuth();
+    const ownerUid = auth.currentUser.uid;
     let photoBase64 = null;
     if (file) {
       try {
@@ -1187,16 +1315,14 @@ document.getElementById('aq-submit').addEventListener('click', async () => {
 // ---------- My private questions (added by players themselves) ----------
 let unsubscribeMyQuestions = null;
 
-async function openMyQuestionsPanel() {
+function openMyQuestionsPanel() {
   const listEl = document.getElementById('my-questions-list');
-  listEl.innerHTML = '<p class="hint" style="margin:0;">جاري التحميل...</p>';
-  try {
-    const uid = await ensureAnonAuth();
-    startMyQuestionsListener(uid);
-  } catch (error) {
-    console.error('My questions auth error:', error);
+  if (!auth.currentUser) {
     listEl.innerHTML = '<p class="hint" style="margin:0;">تعذر الاتصال، حاول مرة ثانية</p>';
+    return;
   }
+  listEl.innerHTML = '<p class="hint" style="margin:0;">جاري التحميل...</p>';
+  startMyQuestionsListener(auth.currentUser.uid);
 }
 
 function startMyQuestionsListener(uid) {
