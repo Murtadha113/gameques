@@ -588,6 +588,14 @@
         <p id="custom-q-error" style="display:none; font-size:11px; color:#FF9E9E; margin:8px 0 0; text-align:center;"></p>
         <p id="custom-q-msg" style="display:none; font-size:11px; color:var(--accent); margin:8px 0 0; text-align:center;">تم الإرسال! بيتراجع من الأدمن قبل ما يضاف للعبة</p>
       </div>
+
+      <div class="footer-link" style="margin-top:8px;">
+        <a href="#" id="toggle-my-questions">أسئلتي المرسلة</a>
+      </div>
+      <div id="my-questions-box" class="custom-q-box" style="display:none;">
+        <p class="hint" style="margin:0 0 8px;">تقدر تمسح أي سؤال أرسلته قبل لا الأدمن يوافق عليه.</p>
+        <div class="q-list" id="my-questions-list"></div>
+      </div>
     </div>
 
     <div class="footer-link"><a href="#" id="admin-link">.</a></div>
@@ -651,10 +659,10 @@
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
 import {
   getFirestore, doc, getDoc, setDoc, onSnapshot,
-  collection, addDoc, deleteDoc, query, orderBy, serverTimestamp
+  collection, addDoc, deleteDoc, query, orderBy, where, serverTimestamp
 } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 import {
-  getAuth, signInWithEmailAndPassword, signOut, onAuthStateChanged
+  getAuth, signInWithEmailAndPassword, signInAnonymously, signOut, onAuthStateChanged
 } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
 
 const firebaseConfig = {
@@ -671,6 +679,12 @@ const db = getFirestore(app);
 const auth = getAuth(app);
 const dataRef = doc(db, "couplesGame", "data");
 const pendingRef = collection(db, "pendingQuestions");
+
+async function ensureAnonAuth() {
+  if (auth.currentUser) return auth.currentUser.uid;
+  const cred = await signInAnonymously(auth);
+  return cred.user.uid;
+}
 
 const ADMIN_UID = "WyzmPfdR9mNd6XKyc1jQzpMCb2x2";
 
@@ -1019,6 +1033,7 @@ document.getElementById('custom-q-submit').addEventListener('click', async () =>
   submitBtn.disabled = true;
   submitBtn.textContent = 'جاري الإرسال...';
   try {
+    const ownerUid = await ensureAnonAuth();
     let photoBase64 = null;
     if (file) {
       try {
@@ -1050,6 +1065,7 @@ document.getElementById('custom-q-submit').addEventListener('click', async () =>
       catName: getCatName(currentCat),
       mode: currentMode,
       photoBase64,
+      ownerUid,
       createdAt: serverTimestamp()
     });
 
@@ -1072,6 +1088,81 @@ document.getElementById('custom-q-submit').addEventListener('click', async () =>
     submitBtn.textContent = 'إرسال';
   }
 });
+
+// ---------- My submitted (pending) questions ----------
+let unsubscribeMyQuestions = null;
+
+document.getElementById('toggle-my-questions').addEventListener('click', async (e) => {
+  e.preventDefault();
+  const box = document.getElementById('my-questions-box');
+  const isHidden = box.style.display === 'none' || !box.style.display;
+  if (isHidden) {
+    box.style.display = 'block';
+    const listEl = document.getElementById('my-questions-list');
+    listEl.innerHTML = '<p class="hint" style="margin:0;">جاري التحميل...</p>';
+    try {
+      const uid = await ensureAnonAuth();
+      startMyQuestionsListener(uid);
+    } catch (error) {
+      console.error('My questions auth error:', error);
+      listEl.innerHTML = '<p class="hint" style="margin:0;">تعذر الاتصال، حاول مرة ثانية</p>';
+    }
+  } else {
+    box.style.display = 'none';
+    stopMyQuestionsListener();
+  }
+});
+
+function startMyQuestionsListener(uid) {
+  stopMyQuestionsListener();
+  unsubscribeMyQuestions = onSnapshot(
+    query(pendingRef, where('ownerUid', '==', uid)),
+    (snap) => {
+      renderMyQuestions(snap.docs.map(d => ({ id: d.id, ...d.data() })));
+    },
+    (error) => {
+      console.error('My questions error:', error);
+    }
+  );
+}
+
+function stopMyQuestionsListener() {
+  if (unsubscribeMyQuestions) {
+    unsubscribeMyQuestions();
+    unsubscribeMyQuestions = null;
+  }
+}
+
+function renderMyQuestions(items) {
+  const listEl = document.getElementById('my-questions-list');
+  listEl.innerHTML = '';
+  if (!items.length) {
+    const empty = document.createElement('p');
+    empty.className = 'hint';
+    empty.style.margin = '0';
+    empty.textContent = 'ما عندك أسئلة بانتظار المراجعة.';
+    listEl.appendChild(empty);
+    return;
+  }
+  items.forEach(item => {
+    const row = document.createElement('div');
+    row.className = 'q-row';
+    const span = document.createElement('span');
+    span.textContent = item.text;
+    const delBtn = document.createElement('button');
+    delBtn.textContent = 'امسح';
+    delBtn.addEventListener('click', async () => {
+      try {
+        await deleteDoc(doc(db, 'pendingQuestions', item.id));
+      } catch (error) {
+        console.error('Delete my question error:', error);
+      }
+    });
+    row.appendChild(span);
+    row.appendChild(delBtn);
+    listEl.appendChild(row);
+  });
+}
 
 // ---------- Admin ----------
 let adminPanelOpen = false;
