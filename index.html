@@ -307,6 +307,21 @@
     border-radius: 50%;
     transition: background .6s ease;
   }
+  .flip-card-content {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 12px;
+    width: 100%;
+    position: relative;
+    z-index: 1;
+  }
+  .q-photo {
+    max-width: 100%;
+    max-height: 200px;
+    border-radius: 14px;
+    object-fit: cover;
+  }
   .flip-card p {
     font-size: 18px;
     font-weight: 600;
@@ -591,7 +606,10 @@
       </div>
 
       <div class="flip-card" id="flip-card">
-        <p id="q-text"></p>
+        <div class="flip-card-content">
+          <img id="q-photo" class="q-photo" alt="صورة السؤال" style="display:none;" />
+          <p id="q-text"></p>
+        </div>
       </div>
       <p class="flip-hint">اضغط على البطاقة أو الزر لسؤال جديد</p>
 
@@ -955,7 +973,7 @@ function pickQuestion(catId) {
   }
   const shared = (state.questions && state.questions[catId]) || [];
   if (!shared.length) return null;
-  return shared[Math.floor(Math.random() * shared.length)];
+  return { text: shared[Math.floor(Math.random() * shared.length)], photoBase64: null };
 }
 
 function getCatName(catId) {
@@ -986,7 +1004,9 @@ async function showPrivateCategory() {
   try {
     const uid = await ensureAnonAuth();
     const snap = await getDocs(query(pendingRef, where('ownerUid', '==', uid), where('mode', '==', currentMode)));
-    myPrivateQuestions = snap.docs.map(d => d.data().text).filter(Boolean);
+    myPrivateQuestions = snap.docs
+      .map(d => ({ text: d.data().text, photoBase64: d.data().photoBase64 || null }))
+      .filter(item => item.text);
   } catch (error) {
     console.error('Load my private questions error:', error);
   }
@@ -1010,7 +1030,15 @@ function renderQuestion() {
     emptyMsg.style.display = 'none';
     aiMini.style.display = 'flex';
     const qText = document.getElementById('q-text');
-    qText.textContent = q;
+    qText.textContent = q.text;
+    const qPhoto = document.getElementById('q-photo');
+    if (q.photoBase64) {
+      qPhoto.src = q.photoBase64;
+      qPhoto.style.display = 'block';
+    } else {
+      qPhoto.removeAttribute('src');
+      qPhoto.style.display = 'none';
+    }
     flipCard.classList.remove('fade-in');
     void flipCard.offsetWidth;
     flipCard.classList.add('fade-in');
