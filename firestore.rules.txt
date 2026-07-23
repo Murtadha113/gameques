@@ -8,9 +8,9 @@ service cloud.firestore {
       allow write: if request.auth != null && request.auth.uid == 'WyzmPfdR9mNd6XKyc1jQzpMCb2x2';
     }
 
-    // الأسئلة المقترحة من اللاعبين (والصورة المرفقة كنص base64)
-    // - أي زائر (حتى بدون تسجيل، عبر Anonymous Auth) يقدر يرسل سؤال باسمه (ownerUid) الخاص فيه
-    // - الأدمن يقدر يشوف/يحذف الكل، وصاحب السؤال نفسه يقدر يشوف/يحذف أسئلته هو بس
+    // الأسئلة الخاصة اللي يضيفها اللاعبين لأنفسهم (والصورة المرفقة كنص base64)
+    // - أي زائر (حتى بدون تسجيل، عبر Anonymous Auth) يقدر يضيف سؤال باسمه (ownerUid) الخاص فيه، ويصير جزء من أسئلته هو بس فورًا بدون موافقة أدمن
+    // - الأدمن يقدر يشوف/يحذف الكل للمراجعة، وصاحب السؤال نفسه يقدر يشوف/يحذف أسئلته هو بس
     match /pendingQuestions/{docId} {
       allow create: if request.auth != null
                     && request.resource.data.ownerUid == request.auth.uid

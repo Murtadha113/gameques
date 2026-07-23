@@ -524,15 +524,45 @@
     <p class="tagline">أسئلة صممت لتقربكم أكثر، فئة بفئة، سؤال بسؤال.</p>
     <div class="ai-note"><span class="dot"></span> كل الأسئلة تُولّد وتُختار بواسطة الذكاء الاصطناعي</div>
 
-    <div id="mode-select" class="grid" style="grid-template-columns: 1fr 1fr;">
-      <button class="cat-btn mode-btn" data-mode="friends">
-        <span class="icon">🧑‍🤝‍🧑</span>
-        أصدقاء
-      </button>
-      <button class="cat-btn mode-btn" data-mode="couples">
-        <span class="icon">❤️</span>
-        كابلز
-      </button>
+    <div id="home-section">
+      <div id="mode-select" class="grid" style="grid-template-columns: 1fr 1fr;">
+        <button class="cat-btn mode-btn" data-mode="friends">
+          <span class="icon">🧑‍🤝‍🧑</span>
+          أصدقاء
+        </button>
+        <button class="cat-btn mode-btn" data-mode="couples">
+          <span class="icon">❤️</span>
+          كابلز
+        </button>
+      </div>
+      <div class="footer-link" style="margin-top:-6px; margin-bottom:16px;">
+        <a href="#" id="nav-add-question">➕ ضيف سؤالك الخاص</a>
+      </div>
+    </div>
+
+    <div id="add-question-view" style="display:none;">
+      <div class="footer-link" style="margin-bottom:14px;">
+        <a href="#" id="aq-back">→ رجوع للرئيسية</a>
+      </div>
+      <div class="custom-q-box" style="margin-top:0;">
+        <p class="hint" style="margin:0 0 8px;">الأسئلة والصور مشفّرة، ولا يمكن لأي أحد رؤيتها سوى اللي أضافها 100% (والأدمن للمراجعة).</p>
+        <input type="text" id="aq-name" placeholder="اسمك" />
+        <select id="aq-cat-select"></select>
+        <div class="inline-row">
+          <input type="text" id="aq-text" placeholder="اكتب سؤالك هنا..." />
+          <button id="aq-submit">إرسال</button>
+        </div>
+        <label class="photo-upload-label" for="aq-photo">📷 ضيف صورة (اختياري)</label>
+        <input type="file" id="aq-photo" accept="image/*" style="display:none;" />
+        <span id="aq-photo-name" class="hint" style="display:none; margin-right:8px;"></span>
+        <p id="aq-error" style="display:none; font-size:11px; color:#FF9E9E; margin:8px 0 0; text-align:center;"></p>
+        <p id="aq-msg" style="display:none; font-size:11px; color:var(--accent); margin:8px 0 0; text-align:center;">تم الحفظ! بيصير جزء من أسئلتك الخاصة أول ما تلعب هذي الفئة</p>
+      </div>
+
+      <div class="admin-section" style="margin-top:18px; border-bottom:none; padding-bottom:0;">
+        <h3>أسئلتك الخاصة</h3>
+        <div class="q-list" id="my-questions-list"></div>
+      </div>
     </div>
 
     <div id="about-view" style="display:none;">
@@ -541,8 +571,8 @@
         <p style="font-size:13px; line-height:1.9; color:var(--ink-soft); margin:0;">
           كابلز لعبة أسئلة تفاعلية تساعدكم تتقربون أكثر، سواء كنتم كابل أو أصدقاء.
           اختر الوضع، اختر الفئة، واسحب سؤال بعد سؤال. كل الأسئلة مولّدة ومنتقاة
-          بواسطة الذكاء الاصطناعي، وتقدر تضيف أسئلتك الخاصة أثناء اللعب وتنحفظ
-          عشان تظهر لاحقًا لأي شخص يلعب.
+          بواسطة الذكاء الاصطناعي، وتقدر تضيف أسئلتك الخاصة من صفحة "ضيف سؤالك
+          الخاص" بالرئيسية — تنحفظ وتصير جزء من أسئلتك بس، ما تشوفها لأي لاعب ثاني.
         </p>
       </div>
     </div>
@@ -571,31 +601,6 @@
       </div>
 
       <div class="ai-note-mini" id="ai-note-mini"><span class="dot"></span> سؤال مولّد بواسطة الذكاء الاصطناعي</div>
-
-      <div class="footer-link" style="margin-top:14px;">
-        <a href="#" id="toggle-add-q">+ ضيف سؤالك الخاص</a>
-      </div>
-      <div id="add-q-inline" class="custom-q-box" style="display:none;">
-        <p class="hint" style="margin:0 0 8px;">الأسئلة والصور مشفّرة، ولا يمكن لأي أحد رؤيتها سوى اللي أضافها 100%.</p>
-        <input type="text" id="custom-q-name" placeholder="اسمك (يشوفه الأدمن بس)" />
-        <div class="inline-row">
-          <input type="text" id="custom-q-input" placeholder="اكتب سؤالك هنا..." />
-          <button id="custom-q-submit">إرسال</button>
-        </div>
-        <label class="photo-upload-label" for="custom-q-photo">📷 ضيف صورة (اختياري)</label>
-        <input type="file" id="custom-q-photo" accept="image/*" style="display:none;" />
-        <span id="custom-q-photo-name" class="hint" style="display:none; margin-right:8px;"></span>
-        <p id="custom-q-error" style="display:none; font-size:11px; color:#FF9E9E; margin:8px 0 0; text-align:center;"></p>
-        <p id="custom-q-msg" style="display:none; font-size:11px; color:var(--accent); margin:8px 0 0; text-align:center;">تم الإرسال! بيتراجع من الأدمن قبل ما يضاف للعبة</p>
-      </div>
-
-      <div class="footer-link" style="margin-top:8px;">
-        <a href="#" id="toggle-my-questions">أسئلتي المرسلة</a>
-      </div>
-      <div id="my-questions-box" class="custom-q-box" style="display:none;">
-        <p class="hint" style="margin:0 0 8px;">تقدر تمسح أي سؤال أرسلته قبل لا الأدمن يوافق عليه.</p>
-        <div class="q-list" id="my-questions-list"></div>
-      </div>
     </div>
 
     <div class="footer-link"><a href="#" id="admin-link">.</a></div>
@@ -618,9 +623,9 @@
     <h1 class="logo" style="font-size:22px; margin-bottom:20px;">لوحة التحكم</h1>
 
     <div class="admin-section">
-      <h3>الأسئلة المقترحة من اللاعبين</h3>
+      <h3>أسئلة اللاعبين الخاصة</h3>
       <div class="q-list" id="pending-list"></div>
-      <p class="hint" id="pending-empty" style="display:none; margin:6px 0 0;">ماكو أسئلة مقترحة حالياً.</p>
+      <p class="hint" id="pending-empty" style="display:none; margin:6px 0 0;">ماكو أسئلة خاصة حالياً.</p>
     </div>
 
     <div class="admin-section">
@@ -658,7 +663,7 @@
 <script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
 import {
-  getFirestore, doc, getDoc, setDoc, onSnapshot,
+  getFirestore, doc, getDoc, setDoc, onSnapshot, getDocs,
   collection, addDoc, deleteDoc, query, orderBy, where, serverTimestamp
 } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 import {
@@ -772,6 +777,7 @@ function listenToData() {
     if (snap.exists()) {
       state = snap.data();
       renderCategories();
+      renderAddQuestionCatSelect();
       if (adminPanelOpen) renderAdminCategories();
     }
   }, (error) => {
@@ -834,11 +840,13 @@ let currentCat = null;
 let currentMode = null;
 
 function hideAllSections() {
-  document.getElementById('mode-select').style.display = 'none';
+  document.getElementById('home-section').style.display = 'none';
   document.getElementById('loading').style.display = 'none';
   document.getElementById('cat-select-wrap').style.display = 'none';
   document.getElementById('card-area').style.display = 'none';
   document.getElementById('about-view').style.display = 'none';
+  document.getElementById('add-question-view').style.display = 'none';
+  stopMyQuestionsListener();
 }
 
 function setActiveNav(id) {
@@ -868,7 +876,22 @@ document.getElementById('nav-home').addEventListener('click', () => {
   setModeTheme(null);
   hideAllSections();
   setActiveNav('nav-home');
-  document.getElementById('mode-select').style.display = 'grid';
+  document.getElementById('home-section').style.display = 'block';
+});
+
+document.getElementById('nav-add-question').addEventListener('click', (e) => {
+  e.preventDefault();
+  hideAllSections();
+  document.getElementById('add-question-view').style.display = 'block';
+  renderAddQuestionCatSelect();
+  openMyQuestionsPanel();
+});
+
+document.getElementById('aq-back').addEventListener('click', (e) => {
+  e.preventDefault();
+  hideAllSections();
+  setActiveNav('nav-home');
+  document.getElementById('home-section').style.display = 'block';
 });
 
 document.getElementById('nav-about').addEventListener('click', () => {
@@ -887,7 +910,7 @@ document.getElementById('nav-categories').addEventListener('click', () => {
       document.getElementById('loading').style.display = 'block';
     }
   } else {
-    document.getElementById('mode-select').style.display = 'grid';
+    document.getElementById('home-section').style.display = 'block';
   }
 });
 
@@ -913,11 +936,25 @@ document.getElementById('back-to-modes').addEventListener('click', (e) => {
   setModeTheme(null);
   hideAllSections();
   setActiveNav('nav-home');
-  document.getElementById('mode-select').style.display = 'grid';
+  document.getElementById('home-section').style.display = 'block';
 });
 
+let myPrivateQuestions = [];
+
+async function loadMyPrivateQuestions(catId) {
+  myPrivateQuestions = [];
+  try {
+    const uid = await ensureAnonAuth();
+    const snap = await getDocs(query(pendingRef, where('ownerUid', '==', uid), where('catId', '==', catId)));
+    myPrivateQuestions = snap.docs.map(d => d.data().text).filter(Boolean);
+  } catch (error) {
+    console.error('Load my private questions error:', error);
+  }
+}
+
 function pickQuestion(catId) {
-  const list = (state.questions && state.questions[catId]) || [];
+  const shared = (state.questions && state.questions[catId]) || [];
+  const list = shared.concat(myPrivateQuestions);
   if (!list.length) return null;
   return list[Math.floor(Math.random() * list.length)];
 }
@@ -927,11 +964,17 @@ function getCatName(catId) {
   return c ? c.name : catId;
 }
 
-function showCard(catId) {
+function getCatMode(catId) {
+  const c = state.categories.find(c => c.id === catId);
+  return c ? c.mode : null;
+}
+
+async function showCard(catId) {
   currentCat = catId;
   document.getElementById('cat-select-wrap').style.display = 'none';
   document.getElementById('card-area').style.display = 'block';
   document.getElementById('cat-label').textContent = getCatName(catId);
+  await loadMyPrivateQuestions(catId);
   renderQuestion();
 }
 
@@ -966,15 +1009,23 @@ document.getElementById('back-btn').addEventListener('click', () => {
 document.getElementById('next-btn').addEventListener('click', renderQuestion);
 document.getElementById('flip-card').addEventListener('click', renderQuestion);
 
-document.getElementById('toggle-add-q').addEventListener('click', (e) => {
-  e.preventDefault();
-  const box = document.getElementById('add-q-inline');
-  box.style.display = box.style.display === 'none' ? 'block' : 'none';
-});
+function renderAddQuestionCatSelect() {
+  const sel = document.getElementById('aq-cat-select');
+  if (!sel || !state) return;
+  const previous = sel.value;
+  sel.innerHTML = '';
+  state.categories.filter(c => !c.hidden).forEach(cat => {
+    const opt = document.createElement('option');
+    opt.value = cat.id;
+    opt.textContent = (cat.mode === 'friends' ? 'أصدقاء' : 'كابلز') + ' — ' + cat.name;
+    sel.appendChild(opt);
+  });
+  if (previous) sel.value = previous;
+}
 
-document.getElementById('custom-q-photo').addEventListener('change', () => {
-  const file = document.getElementById('custom-q-photo').files[0];
-  const nameEl = document.getElementById('custom-q-photo-name');
+document.getElementById('aq-photo').addEventListener('change', () => {
+  const file = document.getElementById('aq-photo').files[0];
+  const nameEl = document.getElementById('aq-photo-name');
   if (file) {
     nameEl.textContent = '📎 ' + file.name;
     nameEl.style.display = 'inline';
@@ -1012,16 +1063,18 @@ function resizeImageToDataURL(file, maxDim, quality) {
   });
 }
 
-document.getElementById('custom-q-submit').addEventListener('click', async () => {
-  const nameInput = document.getElementById('custom-q-name');
-  const input = document.getElementById('custom-q-input');
-  const photoInput = document.getElementById('custom-q-photo');
-  const submitBtn = document.getElementById('custom-q-submit');
-  const errorEl = document.getElementById('custom-q-error');
+document.getElementById('aq-submit').addEventListener('click', async () => {
+  const nameInput = document.getElementById('aq-name');
+  const input = document.getElementById('aq-text');
+  const catSelect = document.getElementById('aq-cat-select');
+  const photoInput = document.getElementById('aq-photo');
+  const submitBtn = document.getElementById('aq-submit');
+  const errorEl = document.getElementById('aq-error');
   const name = nameInput.value.trim();
   const text = input.value.trim();
+  const catId = catSelect.value;
   errorEl.style.display = 'none';
-  if (!name || !text || !currentCat) return;
+  if (!name || !text || !catId) return;
 
   const file = photoInput.files[0];
   if (file && file.size > 15 * 1024 * 1024) {
@@ -1061,9 +1114,9 @@ document.getElementById('custom-q-submit').addEventListener('click', async () =>
     await addDoc(pendingRef, {
       name,
       text,
-      catId: currentCat,
-      catName: getCatName(currentCat),
-      mode: currentMode,
+      catId,
+      catName: getCatName(catId),
+      mode: getCatMode(catId),
       photoBase64,
       ownerUid,
       createdAt: serverTimestamp()
@@ -1072,15 +1125,14 @@ document.getElementById('custom-q-submit').addEventListener('click', async () =>
     nameInput.value = '';
     input.value = '';
     photoInput.value = '';
-    document.getElementById('custom-q-photo-name').style.display = 'none';
-    const msg = document.getElementById('custom-q-msg');
+    document.getElementById('aq-photo-name').style.display = 'none';
+    const msg = document.getElementById('aq-msg');
     msg.style.display = 'block';
     setTimeout(() => {
       msg.style.display = 'none';
-      document.getElementById('add-q-inline').style.display = 'none';
-    }, 1800);
+    }, 2200);
   } catch (error) {
-    console.error('Pending question submit error:', error);
+    console.error('Add private question error:', error);
     errorEl.textContent = 'صار خطأ، حاول مرة ثانية';
     errorEl.style.display = 'block';
   } finally {
@@ -1089,29 +1141,20 @@ document.getElementById('custom-q-submit').addEventListener('click', async () =>
   }
 });
 
-// ---------- My submitted (pending) questions ----------
+// ---------- My private questions (added by players themselves) ----------
 let unsubscribeMyQuestions = null;
 
-document.getElementById('toggle-my-questions').addEventListener('click', async (e) => {
-  e.preventDefault();
-  const box = document.getElementById('my-questions-box');
-  const isHidden = box.style.display === 'none' || !box.style.display;
-  if (isHidden) {
-    box.style.display = 'block';
-    const listEl = document.getElementById('my-questions-list');
-    listEl.innerHTML = '<p class="hint" style="margin:0;">جاري التحميل...</p>';
-    try {
-      const uid = await ensureAnonAuth();
-      startMyQuestionsListener(uid);
-    } catch (error) {
-      console.error('My questions auth error:', error);
-      listEl.innerHTML = '<p class="hint" style="margin:0;">تعذر الاتصال، حاول مرة ثانية</p>';
-    }
-  } else {
-    box.style.display = 'none';
-    stopMyQuestionsListener();
+async function openMyQuestionsPanel() {
+  const listEl = document.getElementById('my-questions-list');
+  listEl.innerHTML = '<p class="hint" style="margin:0;">جاري التحميل...</p>';
+  try {
+    const uid = await ensureAnonAuth();
+    startMyQuestionsListener(uid);
+  } catch (error) {
+    console.error('My questions auth error:', error);
+    listEl.innerHTML = '<p class="hint" style="margin:0;">تعذر الاتصال، حاول مرة ثانية</p>';
   }
-});
+}
 
 function startMyQuestionsListener(uid) {
   stopMyQuestionsListener();
@@ -1140,7 +1183,7 @@ function renderMyQuestions(items) {
     const empty = document.createElement('p');
     empty.className = 'hint';
     empty.style.margin = '0';
-    empty.textContent = 'ما عندك أسئلة بانتظار المراجعة.';
+    empty.textContent = 'ما ضفت أي سؤال خاص لين الحين.';
     listEl.appendChild(empty);
     return;
   }
@@ -1285,24 +1328,13 @@ function renderPendingList(items) {
     btnRow.style.display = 'flex';
     btnRow.style.gap = '8px';
 
-    const approveBtn = document.createElement('button');
-    approveBtn.textContent = 'قبول';
-    approveBtn.addEventListener('click', async () => {
-      if (!item.catId || !state.questions) return;
-      if (!state.questions[item.catId]) state.questions[item.catId] = [];
-      state.questions[item.catId].push(item.text);
-      await saveState();
+    const deleteBtn = document.createElement('button');
+    deleteBtn.textContent = 'حذف';
+    deleteBtn.addEventListener('click', async () => {
       await deleteDoc(doc(db, 'pendingQuestions', item.id));
     });
 
-    const rejectBtn = document.createElement('button');
-    rejectBtn.textContent = 'رفض';
-    rejectBtn.addEventListener('click', async () => {
-      await deleteDoc(doc(db, 'pendingQuestions', item.id));
-    });
-
-    btnRow.appendChild(approveBtn);
-    btnRow.appendChild(rejectBtn);
+    btnRow.appendChild(deleteBtn);
 
     row.appendChild(nameLine);
     row.appendChild(textLine);
